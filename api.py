@@ -19,8 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re, logging, pickle
-from os import path
+import codecs, logging, os, pickle, re
+from sys import exit
 from urllib import parse, request
 from collections import OrderedDict
 from math import ceil
@@ -36,8 +36,54 @@ class Document(object):
         self.prefix = parse.quote("United States – Vietnam Relations, 1945–1967: A Study Prepared by the Department of Defense".encode())
         self.pages = OrderedDict()
         
+        self.directory = os.curdir
         self.logger = logging.getLogger("W2L")
         
+    def call(self):
+        '''Performs the calls to the API and stores the results as numbered text files. This
+        function checks if the /raw directory already exists to avoid querying the API multiple
+        times. Files are stored in the following format:
+        
+        /Wikipedia-to-LaTeX        <-- project folder
+        +-- /raw                   <-- folder for all raw text files pulled from the API 
+        |   +-- /0                 <-- folder for the first main page (in this case, '/Front matter'
+        |   |   +-- 0.txt          <-- text from the first API call (in this case, pages 1-7)
+        |   |   +-- 1.txt          <-- text from the second API call (in this case, page 11)
+        |   +-- /1                 <-- folder for the second main page ('/')
+        |   |   +-- 0.txt          <-- text from the first API call (page 9)
+        |   |   +-- 1.txt          <-- text from the second API call (page 10)
+        |   +-- /2                 <-- folder for the third main page ('/I. Vietnam and the U.S., 1940–1950')
+        |   |   +-- 0.txt          <-- text from the first API call (in this case, pages 1-4)
+        |   +-- /3                 <-- folder for the fourth main page ('/I. A. U.S. Policy, 1940–50')
+        |   |   +-- 0.txt          <-- text from the first API call (pages 5-9)
+        |   |   +-- 1.txt          <-- text from the second API call (pages 10-59)
+        |   |   +-- 2.txt          <-- text from the third API call (pages 60-73)
+        
+        ...and so on.
+        '''
+        
+        # Attempt to create /raw folder
+        try:
+            os.mkdir(self.directory + '/raw')
+        except OSError:
+            self.logger.exception("Folder /raw already exists.")
+            exit("Cannot create file structure.")
+          
+        pages_count = 0  
+        # Iterate through each entry in the self.pages dict to perform the API calls
+        for key in self.pages.keys():
+            calls = self.form_call()
+            os.mkdir(self.directory + '/raw/' + (str(pages_count)))
+            call_count = 0
+            for call in calls:
+                filename = self.directory + '/raw/' + str(pages_count) + "/" + str(call_count) + ".txt"
+                with codecs.open(filename, 'w', 'utf-8') as file:
+                    text = request.urlopen(call).read().decode('utf-8')
+                    file.write(text)
+                file.close()
+                call_count += 1
+            pages_count += 1
+            
     def form_call(self):
         '''Form the URLs to pull data from the API. The API supports calls of up to fifty pages
         at a time; if necessary, this will create multiple URLs in case the list of pages is too
@@ -60,8 +106,10 @@ class Document(object):
         return api_calls
         
     def organize(self):
-        '''Creates the ordered dictionary containing the filenames and page numbers.'''
-        if not path.exists('pagelist.pkl'):
+        '''Creates the ordered dictionary containing the filenames and page numbers. If possible,
+        it uses a pickled version of this pagelist from a previous run to avoid querying the API
+        repeatedly. This is mostly for debugging and will probably be removed in the release.'''
+        if not os.path.exists('pagelist.pkl'):
             self.logger.debug("No page list found. Querying API.")
             current_url = "/Front matter".encode()
             while current_url != "":
@@ -115,6 +163,7 @@ class Document(object):
                     self.logger.exception("Exception occurred when trying to pickle the page list:"
                                           "{}".format(e.strerror))
             file.close()
+            
         else:
             self.logger.debug("Page list found. Unpickling.")
             with open('pagelist.pkl', 'rb') as file:
@@ -124,6 +173,8 @@ class Document(object):
                     print ("Error occurred when trying to unpickle the page list: {}"
                            .format(e.strerror))
             file.close()
+            
+        self.logger.debug("{} main pages organized.".format(len(self.pages)))
         
     def split_calls(self,pagelist):
         '''The API only accepts 50 calls at a time, so this function splits the lists of pages
