@@ -46,7 +46,7 @@ class Document(object):
         
         /Wikipedia-to-LaTeX        <-- project folder
         +-- /raw                   <-- folder for all raw text files pulled from the API 
-        |   +-- /0                 <-- folder for the first main page (in this case, '/Front matter'
+        |   +-- /0                 <-- folder for the first main page (in this case, '/Front matter')
         |   |   +-- 0.txt          <-- text from the first API call (in this case, pages 1-7)
         |   |   +-- 1.txt          <-- text from the second API call (in this case, page 11)
         |   +-- /1                 <-- folder for the second main page ('/')
@@ -197,16 +197,15 @@ class Document(object):
             if int(page) >= 100:
                 high_index = idx
                 break
-            
-        if low_index == None:
-            # The list has no page numbers >=10
-            splitlist.append(pagelist)
-            return splitlist
         
+        # Split page numbers <10   
+        if low_index == None:
+            splitlist.append(pagelist)
+            return splitlist # The list has no page numbers >=10
         elif low_index > 0:
             splitlist.append(pagelist[:low_index])
             
-        # Now splitlist[index:] is the list of page numbers >=10
+        # Split page numbers that are >=10 and <100
         if high_index == None:
             top = len(pagelist)
         else:
@@ -215,7 +214,6 @@ class Document(object):
         number = top-low_index # Number of items in the list containing numbers 10-99
         list_count = ceil(number/50) # Number of sublists needed for this
         first_index = low_index # First index to include in the next list
-        
         for i in range(list_count):
             sublist = list()
             if i == list_count-1:
@@ -227,11 +225,11 @@ class Document(object):
             first_index = first_index + page_range # Update first_index with new index
             splitlist.append(sublist)
             del sublist
-                
+        
+        # Split page numbers that are >=100        
         if high_index != None:
             number = len(pagelist) - high_index # Number of items containing numbers >=100
             list_count = ceil(number/50) # Number of sublists needed for this
-            
             for i in range(list_count):
                 sublist = list()
                 if i == list_count-1:
