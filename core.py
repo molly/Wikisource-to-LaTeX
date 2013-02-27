@@ -35,3 +35,4 @@ if __name__ == "__main__":
     setup_logging()
     doc = Document()
     doc.organize()
+    print(doc.prefix)

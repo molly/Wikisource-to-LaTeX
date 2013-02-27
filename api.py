@@ -39,10 +39,11 @@ class Document(object):
         self.logger = logging.getLogger("W2L")
         
     def form_call(self):
-        '''Form the URLs to pull data from the API. The API supports calls of up to fifty pages at a time; if necessary,
-        this will create multiple URLs in case the list of pages is too long.
+        '''Form the URLs to pull data from the API. The API supports calls of up to fifty pages
+        at a time; if necessary, this will create multiple URLs in case the list of pages is too
+        long. Returns a list containing one or more URLs, each of which requests the content of
+        1-50 pages.'''
         
-        Returns a list containing one or more URLs, each of which requests the content of 1-50 pages.'''
         current_page = self.pages.popitem(False)
         self.logger.info("Forming API call for {}.".format(current_page))
         filename = parse.quote(current_page[1].pop(0))
@@ -89,7 +90,8 @@ class Document(object):
                     title = title_r.group(1)     
                     
                 # Find each pages index tag and collect the page numbers for each
-                pages_r = re.findall("""<pages\sindex="(.*?)"\sfrom=(\d+)\sto=(\d+)\s\/>""", current_page)
+                pages_r = re.findall("""<pages\sindex="(.*?)"\sfrom=(\d+)\sto=(\d+)\s\/>""",
+                                     current_page)
                 if pages_r and title:
                     index = pages_r[0][0]
                     if title not in self.pages:
@@ -110,7 +112,8 @@ class Document(object):
                 try:
                     pickle.dump(self.pages, file)
                 except Exception as e:
-                    self.logger.exception("Exception occurred when trying to pickle the page list: {}".format(e.strerror))
+                    self.logger.exception("Exception occurred when trying to pickle the page list:"
+                                          "{}".format(e.strerror))
             file.close()
         else:
             self.logger.debug("Page list found. Unpickling.")
@@ -118,7 +121,8 @@ class Document(object):
                 try:
                     self.pages = pickle.load(file)
                 except Exception as e:
-                    print ("Error occurred when trying to unpickle the page list: {}".format(e.strerror))
+                    print ("Error occurred when trying to unpickle the page list: {}"
+                           .format(e.strerror))
             file.close()
         
     def split_calls(self,pagelist):
@@ -174,7 +178,7 @@ class Document(object):
             del sublist
                 
         if high_index != None:
-            number = len(pagelist) - high_index # Number of items in the list containing numbers >=100
+            number = len(pagelist) - high_index # Number of items containing numbers >=100
             list_count = ceil(number/50) # Number of sublists needed for this
             
             for i in range(list_count):
