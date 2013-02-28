@@ -21,7 +21,6 @@
 
 import logging
 from api import Document
-from wsparser import Parser
 import os
 
 def setup_logging():
@@ -41,5 +40,3 @@ if __name__ == "__main__":
         doc.call()
     if not os.path.exists(os.curdir + '/text'):
         doc.json_to_text()
-        
-    parser = Parser()

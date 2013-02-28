@@ -22,26 +22,45 @@
 __all__ = ['Parser']
 
 import codecs, logging, os
-import ply.lex as lex
+import lex
 
 logger = logging.getLogger("W2L")
+
+#Token list
 tokens = (
+          'NOINCLUDE', # <noinclude>
+          'E_NOINCLUDE', # </noinclude>
+          'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
           'WLINK', # For links to Wikipedia, Wiktionary, etc.
           'WORD',
           'SPACE',
           )
+
+# Simple matches
+t_NOINCLUDE = r'<noinclude>'
+t_E_NOINCLUDE = r'</noinclude>'
 t_WLINK = r'[[]{2}w(?:ikt)?:(?:.*?)[]]{2}'
-t_WORD = r'[<>a-zA-Z]+'
+t_WORD = r'[a-zA-Z]+'
 t_SPACE = r'[\s\t\r\n]'
 
+# More complex matches
+def t_PAGEQUALITY(token):
+    r'<pagequality\slevel="(\d)"\suser="(?:\S*?)"\s?/>'
+    token.value = lexer.lexmatch.group(2)
+    return token
+
+# Error handling
 def t_error(token):
     print ("Illegal character {}".format(token.value[0]))
     token.lexer.skip(1)
 
-with codecs.open(os.curdir+'/text/3/0.txt', 'r', 'utf-8') as original:
-    test_data = original.read()
+
+# Open and read test file
+with codecs.open(os.curdir+'/text/3/1.txt', 'r', 'utf-8') as original:
+    test_data = original.read(500)
 original.close()
 
+# Begin!
 lexer = lex.lex()
 lexer.input(test_data)
 while True:
