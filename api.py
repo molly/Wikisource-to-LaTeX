@@ -19,11 +19,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import codecs, logging, os, pickle, re
+import codecs, json, logging, os, pickle, pprint, re
 from sys import exit
 from urllib import parse, request
 from collections import OrderedDict
 from math import ceil
+from time import time
 
 class Document(object):
     '''This class reads each page (in the main namespace, not the Index pages) and creates an
@@ -32,7 +33,7 @@ class Document(object):
     
     def __init__(self):
         # Bare API call, minus the page title
-        self.api = "http://en.wikisource.org/w/api.php?format=txt&action=query&titles={0}&prop=revisions&rvprop=content"
+        self.api = "http://en.wikisource.org/w/api.php?format=json&action=query&titles={0}&prop=revisions&rvprop=content"
         self.prefix = parse.quote("United States – Vietnam Relations, 1945–1967: A Study Prepared by the Department of Defense".encode())
         self.pages = OrderedDict()
         
@@ -69,6 +70,7 @@ class Document(object):
             self.logger.exception("Folder /raw already exists.")
             exit("Cannot create file structure.")
           
+        start_time = time()
         pages_count = 0  
         # Iterate through each entry in the self.pages dict to perform the API calls
         for key in self.pages.keys():
@@ -76,14 +78,15 @@ class Document(object):
             os.mkdir(self.directory + '/raw/' + (str(pages_count)))
             call_count = 0
             for call in calls:
-                filename = self.directory + '/raw/' + str(pages_count) + "/" + str(call_count) + ".txt"
+                filename = self.directory + '/raw/' + str(pages_count) + "/" + str(call_count) + ".json"
                 with codecs.open(filename, 'w', 'utf-8') as file:
                     text = request.urlopen(call).read().decode('utf-8')
                     file.write(text)
                 file.close()
                 call_count += 1
             pages_count += 1
-            
+        self.logger.debug("Download queries completed in {} seconds.".format(time()-start_time))
+        
     def form_call(self):
         '''Form the URLs to pull data from the API. The API supports calls of up to fifty pages
         at a time; if necessary, this will create multiple URLs in case the list of pages is too
@@ -91,7 +94,7 @@ class Document(object):
         1-50 pages.'''
         
         current_page = self.pages.popitem(False)
-        self.logger.info("Forming API call for {}.".format(current_page))
+        self.logger.debug("Requesting content for {}.".format(current_page[0]))
         filename = parse.quote(current_page[1].pop(0))
         pages = self.split_calls(current_page[1])
 
@@ -104,6 +107,24 @@ class Document(object):
             api_calls.append(self.api.format(titles))
             titles = ""
         return api_calls
+    
+    def json_to_text(self):
+        folders = sorted(os.listdir(path=(os.curdir + '/raw')), key=int)
+        os.mkdir(os.curdir + '/text')
+        for folder in folders:
+            os.mkdir(os.curdir + '/text/' + folder)
+            pages = sorted(os.listdir(path=(os.curdir + '/raw/' + folder)), key=lambda x: int(x[0]))
+            for page in pages:
+                with open(os.curdir + '/raw/' + folder + '/' + page, 'r') as file:
+                    data = file.read()
+                    json_data = json.loads(data)
+                    text = ""
+                    for key in json_data["query"]["pages"].keys():
+                        text += json_data["query"]["pages"][key]['revisions'][0]["*"]
+                file.close()
+                with codecs.open(os.curdir + '/text/' + folder + '/' + page[0] + '.txt', 'w', 'utf-8') as textfile:
+                    textfile.write(text)
+                textfile.close()
         
     def organize(self):
         '''Creates the ordered dictionary containing the filenames and page numbers. If possible,
@@ -174,7 +195,7 @@ class Document(object):
                            .format(e.strerror))
             file.close()
             
-        self.logger.debug("{} main pages organized.".format(len(self.pages)))
+        self.logger.debug("{} main pages organized.".format(len(self.pages)))            
         
     def split_calls(self,pagelist):
         '''The API only accepts 50 calls at a time, so this function splits the lists of pages

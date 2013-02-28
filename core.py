@@ -21,6 +21,7 @@
 
 import logging
 from api import Document
+import os
 
 def setup_logging():
     logger=logging.getLogger("W2L")
@@ -35,4 +36,6 @@ if __name__ == "__main__":
     setup_logging()
     doc = Document()
     doc.organize()
-    doc.call()
+    if not os.path.exists(os.curdir + '/raw'):
+        doc.call()
+    doc.json_to_text()
