@@ -51,34 +51,26 @@ class Tokenizer(object):
               'WORD',
               'PUNCT',
               'NUMBER',
-              'LTGT'
+              'LTGT' # TEMPORARY
               )
     
     states = (
               ('table', 'inclusive'),
               )
 
-    # Simple matches
-    t_NOINCLUDE = r'<noinclude>\n?'
-    t_E_NOINCLUDE = r'</noinclude>\n?'
-    t_table_TROW = r'<tr>\n?'
-    t_table_E_TROW = r'</tr>\n?'
-    t_table_TITEM = r'<td(.*?)>'
-    t_table_E_TITEM = r'\n'
-    t_OLIST = r'<ol>'
-    t_E_OLIST = r'</ol>'
-    t_LITEM = r'<li>'
-    t_E_LITEM = r'</li>'
-    t_DECLASSIFIED = r'<b>Declassified(?:.*?)Date\:\s2011'
-    t_SECRET = r'\{{2}center\|<u>TOP SECRET – Sensitive</u>\}{2}'
-    t_WLINK = r'[[]{2}w(?:ikt)?:(?:.*?)[]]{2}'
-    t_PUNCT = r"""[!@\#\$\%\^&\*\(\)\-–—\+=\[\]\{\}\\\|\:;"',\.\?/~]"""
-    t_WORD = r'[a-zA-Z]+'
-    t_NUMBER = r'[0-9]+'
-    t_WHITESPACE = r'(?:\s|\t|\r|\n|<br\s?/?>)'
-    t_LTGT = r'[<>]'
-        
-    # More complex match behavior  
+    # Matches
+    def t_NOINCLUDE(self, token):
+        r'<noinclude>\n?'
+        return token
+    
+    def t_E_NOINCLUDE(self, token):
+        r'</noinclude>\n?'
+        return token
+    
+    def t_SECRET(self, token):
+        r'[{]{2}center\|\<u\>TOP(?:.*?)[}]{2}'
+        return token
+    
     def t_TABLE(self, token):
         r'<table(?:.*?)>\n'
         token.lexer.begin('table') # Begin table state
@@ -89,31 +81,92 @@ class Tokenizer(object):
         token.lexer.begin('INITIAL') # End table state
         return token
     
+    def t_table_TROW(self, token):
+        r'<tr>\n?'
+        return token
+    
+    def t_table_E_TROW(self, token):
+        r'</tr>\n?'
+        return token
+    
+    def t_table_TITEM(self, token):
+        r'<td(.*?)>'
+        return token
+    
+    def t_table_E_TITEM(self, token):
+        r'\n'
+        return token
+    
+    def t_OLIST(self, token):
+        r'<ol>'
+        return token
+    
+    def t_E_OLIST(self, token):
+        r'</ol>'
+        return token
+    
+    def t_LITEM(self,token):
+        r'<li>'
+        return token
+    
+    def t_E_LITEM(self, token):
+        r'</li>'
+        return token
+    
     def t_PAGEQUALITY(self, token):
-        r'<pagequality\slevel="(\d)"\suser="(?:\S*?)"\s?/>'
-        token.value = token.lexer.lexmatch.group(4)
+        r'<pagequality\slevel="(?P<level>\d)"\suser="(?:\S*?)"\s?/>'
+        token.value = token.lexer.lexmatch.group('level')
+        return token
+    
+    def t_DECLASSIFIED(self, token):
+        r'<b>Declassified(?:.*?)Date\:\s2011'
         return token
     
     def t_UNDERLINED(self, token):
-        r'[{]{2}u\|(.*?)[}]{2}'
-        token.value = token.lexer.lexmatch.group(6)
+        r'[{]{2}u\|(?P<word>.*?)[}]{2}'
+        token.value = token.lexer.lexmatch.group('word')
         return token
     
     def t_BOLDED(self, token):
-        r"""'{3}(.*?)'{3}"""
-        token.value = token.lexer.lexmatch.group(6)
+        r"""'{3}(?P<word>.*?)'{3}"""
+        token.value = token.lexer.lexmatch.group('word')
         return token
     
     def t_ITALICIZED(self, token):
-        r"""'{2}(.*?)'{2}"""
-        token.value = token.lexer.lexmatch.group(6)
+        r"""'{2}(?P<word>.*?)'{2}"""
+        token.value = token.lexer.lexmatch.group('word')
         return token
     
+    def t_WLINK(self, token):
+        r'[[]{2}w(?:ikt)?:(?:.*?)[]]{2}'
+        return token
+     
     # Ignores
     def t_EXTRANEOUS_HTML(self, token):
         r'</?(?:div|p)(?:\s(?:.*?))?>'
         pass
     
+    # VERY basic matches that have to be checked last.
+    def t_PUNCT(self, token):
+        r"""[!@\#\$\%\^&\*\(\)\-–—\+=\[\]\{\}\\\|\:;"',\.\?/~]"""
+        return token
+    
+    def t_WORD(self, token):
+        r'[a-zA-Z]+'
+        return token
+    
+    def t_NUMBER(self, token):
+        r'[0-9]+'
+        return token
+    
+    def t_WHITESPACE(self, token):
+        r'(?:\s|\t|\r|\n|<br\s?/?>)+'
+        return token
+    
+    def t_LTGT(self, token):
+        r'[<>]' # TEMPORARY
+        return token
+        
     # Error handling
     def t_error(self, token):
         print ("Illegal character {}".format(token.value[0]))
