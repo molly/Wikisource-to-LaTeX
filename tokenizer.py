@@ -19,52 +19,50 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-__all__ = ['Parser']
+__all__ = ['Tokenizer']
 
 import codecs, logging, os
 import lex
 
-logger = logging.getLogger("W2L")
+class Tokenizer(object):
+    #Token list
+    tokens = (
+              'NOINCLUDE', # <noinclude>
+              'E_NOINCLUDE', # </noinclude>
+              'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
+              'WLINK', # For links to Wikipedia, Wiktionary, etc.
+              'WORD',
+              'SPACE',
+              )
 
-#Token list
-tokens = (
-          'NOINCLUDE', # <noinclude>
-          'E_NOINCLUDE', # </noinclude>
-          'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
-          'WLINK', # For links to Wikipedia, Wiktionary, etc.
-          'WORD',
-          'SPACE',
-          )
+    # Simple matches
+    t_NOINCLUDE = r'<noinclude>'
+    t_E_NOINCLUDE = r'</noinclude>'
+    t_WLINK = r'[[]{2}w(?:ikt)?:(?:.*?)[]]{2}'
+    t_WORD = r'[a-zA-Z]+'
+    t_SPACE = r'[\s\t\r\n]'
+        
+    def __init__(self):
+        self.logger = logging.getLogger("W2L")
 
-# Simple matches
-t_NOINCLUDE = r'<noinclude>'
-t_E_NOINCLUDE = r'</noinclude>'
-t_WLINK = r'[[]{2}w(?:ikt)?:(?:.*?)[]]{2}'
-t_WORD = r'[a-zA-Z]+'
-t_SPACE = r'[\s\t\r\n]'
+    # More complex matches
+    def t_PAGEQUALITY(self, token):
+        r'<pagequality\slevel="(\d)"\suser="(?:\S*?)"\s?/>'
+        token.value = token.lexer.lexmatch.group(2)
+        return token
 
-# More complex matches
-def t_PAGEQUALITY(token):
-    r'<pagequality\slevel="(\d)"\suser="(?:\S*?)"\s?/>'
-    token.value = lexer.lexmatch.group(2)
-    return token
-
-# Error handling
-def t_error(token):
-    print ("Illegal character {}".format(token.value[0]))
-    token.lexer.skip(1)
-
-
-# Open and read test file
-with codecs.open(os.curdir+'/text/3/1.txt', 'r', 'utf-8') as original:
-    test_data = original.read(500)
-original.close()
-
-# Begin!
-lexer = lex.lex()
-lexer.input(test_data)
-while True:
-    token = lexer.token()
-    if not token:
-        break      # No more input
-    print(token)
+    # Error handling
+    def t_error(self, token):
+        print ("Illegal character {}".format(token.value[0]))
+        token.lexer.skip(1)
+    
+    def analyze(self, data):
+        self.lexer.input(data)
+        while True:
+            token = self.lexer.token()
+            if not token:
+                break      # No more input
+            print(token)
+        
+    def build(self,**kwargs):
+        self.lexer = lex.lex(module=self, **kwargs)

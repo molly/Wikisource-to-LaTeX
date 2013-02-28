@@ -19,9 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging
+import codecs, logging, os
 from api import Document
-import os
+from tokenizer import Tokenizer
 
 def setup_logging():
     logger=logging.getLogger("W2L")
@@ -40,3 +40,13 @@ if __name__ == "__main__":
         doc.call()
     if not os.path.exists(os.curdir + '/text'):
         doc.json_to_text()
+        
+    # Open and read test file
+    with codecs.open(os.curdir+'/text/3/1.txt', 'r', 'utf-8') as original:
+        test_data = original.read(500)
+    original.close()
+
+    # Begin!
+    lexer = Tokenizer()
+    lexer.build()
+    lexer.analyze(test_data)
