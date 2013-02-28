@@ -18,28 +18,27 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+import codecs, logging, os, re
 
-import logging
-from api import Document
-from regex import Parser
-import os
-
-def setup_logging():
-    logger=logging.getLogger("W2L")
-    logger.setLevel(logging.DEBUG)
-    console_formatter = logging.Formatter("%(asctime)s - %(levelname)s"
-                                          ": %(message)s", datefmt="%I:%M:%S %p")
-    consolehandler = logging.StreamHandler() 
-    consolehandler.setFormatter(console_formatter)
-    logger.addHandler(consolehandler)
-
-if __name__ == "__main__":
-    setup_logging()
-    doc = Document()
-    reg = Parser()
-    doc.organize()
-    if not os.path.exists(os.curdir + '/raw'):
-        doc.call()
-    if not os.path.exists(os.curdir + '/text'):
-        doc.json_to_text()
-    reg.test()
+class Parser(object):
+    def __init__(self):
+        self.patterns = dict()
+        self.logger = logging.getLogger("W2L")
+        
+    def build_dict(self):
+        #self.patterns['[[]{2}w(?:ikt)?:(?:.*?)\|(.*?)[]]{2}']='\1'
+        self.patterns = {
+                         'e' : 'MEOW',
+                         }
+        
+    def test(self):
+        self.logger.debug("Copying to test text file.")
+        pattern = re.compile('|'.join(self.patterns.keys()))
+#        with codecs.open(os.curdir+'/text/3/0.txt', 'r', 'utf-8') as original:
+#            original_text = original.read()
+#            with codecs.open(os.curdir+'/test.txt', 'w', 'utf-8') as new:
+#                parsed_text = pattern.sub(lambda m: self.patterns[m.group(0)], original_text)
+#                new.write(parsed_text)
+#        parsed = pattern.sub(lambda m: self.patterns[m.group(0)], 'this is the best policy if')
+        m = re.sub('b(.)st', '\1', 'this is the best policy if')
+        print(m)
