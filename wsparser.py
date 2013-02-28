@@ -19,27 +19,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging
-from api import Document
-from wsparser import Parser
-import os
+__all__ = ['Parser']
 
-def setup_logging():
-    logger=logging.getLogger("W2L")
-    logger.setLevel(logging.DEBUG)
-    console_formatter = logging.Formatter("%(asctime)s - %(levelname)s"
-                                          ": %(message)s", datefmt="%I:%M:%S %p")
-    consolehandler = logging.StreamHandler() 
-    consolehandler.setFormatter(console_formatter)
-    logger.addHandler(consolehandler)
+import codecs, logging, os
+import ply.lex as lex
 
-if __name__ == "__main__":
-    setup_logging()
-    doc = Document()
-    doc.organize()
-    if not os.path.exists(os.curdir + '/raw'):
-        doc.call()
-    if not os.path.exists(os.curdir + '/text'):
-        doc.json_to_text()
-        
-    parser = Parser()
+logger = logging.getLogger("W2L")
+tokens = (
+          'WLINK', # For links to Wikipedia, Wiktionary, etc.
+          'WORD',
+          'SPACE',
+          )
+t_WLINK = r'[[]{2}w(?:ikt)?:(?:.*?)[]]{2}'
+t_WORD = r'[<>a-zA-Z]+'
+t_SPACE = r'[\s\t\r\n]'
+
+def t_error(token):
+    print ("Illegal character {}".format(token.value[0]))
+    token.lexer.skip(1)
+
+with codecs.open(os.curdir+'/text/3/0.txt', 'r', 'utf-8') as original:
+    test_data = original.read()
+original.close()
+
+lexer = lex.lex()
+lexer.input(test_data)
+while True:
+    token = lexer.token()
+    if not token:
+        break      # No more input
+    print(token)

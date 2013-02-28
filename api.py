@@ -19,7 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import codecs, json, logging, os, pickle, pprint, re
+__all__ = ['Document']
+
+import codecs, json, logging, os, pickle, re
 from sys import exit
 from urllib import parse, request
 from collections import OrderedDict
