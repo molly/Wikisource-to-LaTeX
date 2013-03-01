@@ -19,37 +19,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import codecs, logging, os, lex
-from api import Document
-from tokenizer import Tokenizer
-
-def setup_logging():
-    logger=logging.getLogger("W2L")
-    logger.setLevel(logging.DEBUG)
-    console_formatter = logging.Formatter("%(asctime)s - %(levelname)s"
-                                          ": %(message)s", datefmt="%I:%M:%S %p")
-    consolehandler = logging.StreamHandler() 
-    consolehandler.setFormatter(console_formatter)
-    logger.addHandler(consolehandler)
-    return logger
-
-if __name__ == "__main__":
-    logger = setup_logging()
-    doc = Document()
-    doc.organize()
-    if not os.path.exists(os.curdir + '/raw'):
-        logger.debug("Getting raw text files.")
-        doc.call()
-    if not os.path.exists(os.curdir + '/text'):
-        logger.debug("Parsing JSON to TXT.")
-        doc.json_to_text()
-        
-#    # Open and read test file
-#    with codecs.open(os.curdir+'/text/3/1.txt', 'r', 'utf-8') as original:
-#        test_data = original.read()
-#    original.close()
-#
-#    # Begin!
-#    lexer = Tokenizer()
-#    lexer.build()
-#    lexer.analyze(test_data)
+class W2LError(Exception):
+    '''Base exception class.'''
+    
+class APIError(W2LError):
+    '''An error occurred during the API query process.'''
+    
+class NoPagesReturned(APIError):
+    '''The query to the Wikimedia API returned 0 main pages. The query may have been formatted
+    incorrectly.'''
+    
+class PickleEmpty(APIError):
+    '''The pickle file containing the list of pages is empty. Delete the file, then re-run the
+    program.'''
+    

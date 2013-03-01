@@ -27,6 +27,7 @@ from urllib import parse, request
 from collections import OrderedDict
 from math import ceil
 from time import time
+from exceptions import APIError, NoPagesReturned, PickleEmpty
 
 class Document(object):
     '''This class reads each page (in the main namespace, not the Index pages) and creates an
@@ -35,7 +36,8 @@ class Document(object):
     
     def __init__(self):
         # Bare API call, minus the page title
-        self.api = "http://en.wikisource.org/w/api.php?format=json&action=query&titles={0}&prop=revisions&rvprop=content"
+        self.api_json = "http://en.wikisource.org/w/api.php?format=json&action=query&titles={0}&prop=revisions&rvprop=content"
+        self.api_txt = "http://en.wikisource.org/w/api.php?format=txt&action=query&titles={0}&prop=revisions&rvprop=content"
         self.prefix = parse.quote("United States – Vietnam Relations, 1945–1967: A Study Prepared by the Department of Defense".encode())
         self.pages = OrderedDict()
         
@@ -99,6 +101,7 @@ class Document(object):
         self.logger.debug("Requesting content for {}.".format(current_page[0]))
         filename = parse.quote(current_page[1].pop(0))
         pages = self.split_calls(current_page[1])
+        print(pages)
 
         titles = ""
         api_calls = list()
@@ -106,34 +109,35 @@ class Document(object):
             for number in group:
                 titles += "Page:" + filename + "/" + str(number) + "|"
             titles = titles[:-1]
-            api_calls.append(self.api.format(titles))
+            api_calls.append(self.api_json.format(titles))
             titles = ""
         return api_calls
     
     def json_to_text(self):
-        folders = sorted(os.listdir(path=(os.curdir + '/raw')), key=int)
         os.mkdir(os.curdir + '/text')
+        folders = sorted(os.listdir(path=(os.curdir + '/raw')), key=int)
         for folder in folders:
             os.mkdir(os.curdir + '/text/' + folder)
-            pages = sorted(os.listdir(path=(os.curdir + '/raw/' + folder)), key=lambda x: int(x[0]))
-            for page in pages:
-                with open(os.curdir + '/raw/' + folder + '/' + page, 'r') as file:
-                    data = file.read()
+            files = sorted(os.listdir(path=(os.curdir + '/raw/' + folder)), key=lambda x: int(x[0]))
+            for file in files:
+                with open(os.curdir + '/raw/' + folder + '/' + file, 'r') as f:
+                    data = f.read()
                     json_data = json.loads(data)
-                    text = ""
+                    pagedict = dict()
                     for key in json_data["query"]["pages"].keys():
-                        text += json_data["query"]["pages"][key]['revisions'][0]["*"]
-                file.close()
-                with codecs.open(os.curdir + '/text/' + folder + '/' + page[0] + '.txt', 'w', 'utf-8') as textfile:
-                    textfile.write(text)
-                textfile.close()
+                        pagedict[json_data["query"]["pages"][key]["title"]] = key
+                    pagelist = sorted(pagedict.keys())
+                    with codecs.open(os.curdir + '/text/' + folder + '/' + file[0] +'.txt', 'w', 'utf-8') as textfile:
+                        for pagename in pagelist:
+                            textfile.write(json_data["query"]["pages"][pagedict[pagename]]['revisions'][0]["*"])
+                            
         
     def organize(self):
         '''Creates the ordered dictionary containing the filenames and page numbers. If possible,
         it uses a pickled version of this pagelist from a previous run to avoid querying the API
         repeatedly. This is mostly for debugging and will probably be removed in the release.'''
         if not os.path.exists('pagelist.pkl'):
-            self.logger.debug("No page list found. Querying API.")
+            self.logger.debug("No pickled page list found. Querying API.")
             current_url = "/Front matter".encode()
             while current_url != "":
                 current_url = parse.quote(current_url)
@@ -141,10 +145,10 @@ class Document(object):
                 # Account for relative links
                 if current_url[0] == "/":
                     current_url = self.prefix + current_url
-                
+
                 # Create API request    
-                current_url = self.api.format(current_url)
-                
+                current_url = self.api_txt.format(current_url)
+
                 # Get the text of the request
                 current_page = request.urlopen(current_url).read().decode('utf-8')
                 
@@ -177,7 +181,12 @@ class Document(object):
                 
                 title = None
                 current_url = next_url
-            
+                
+                
+            if len(self.pages) == 0:
+                raise NoPagesReturned()
+                exit()
+                
             # Saves to a text file to avoid having to query the API many times
             with open('pagelist.pkl', 'wb') as file:
                 try:
@@ -192,6 +201,12 @@ class Document(object):
             with open('pagelist.pkl', 'rb') as file:
                 try:
                     self.pages = pickle.load(file)
+                    if len(self.pages) == 0:
+                        raise PickleEmpty()
+                except PickleEmpty:
+                    self.logger.exception("Pickle file is empty. Delete the pagelist.pkl file and"
+                                          "try running the program again.")
+                    exit()
                 except Exception as e:
                     print ("Error occurred when trying to unpickle the page list: {}"
                            .format(e.strerror))

@@ -43,6 +43,9 @@ class Tokenizer(object):
               'TLITEM', # <li> in table
               'TE_LITEM', # </li> in table
               'TFORCED_WHITESPACE', # <br/> in a table
+            # Wikitable state
+              'WIKITABLE', # Beginning of table {|
+              'E_WIKITABLE', # End of table |}
             # Tokens to check before HTML state  
               'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
               'DECLASSIFIED', # Declassified per Executive Order... Date: 2011
@@ -83,6 +86,7 @@ class Tokenizer(object):
 #===================================================================================================
     states = (
               ('table', 'inclusive'),
+              ('wikitable', 'inclusive'),
               ('html', 'exclusive')
               )
 
@@ -142,6 +146,18 @@ class Tokenizer(object):
     
     def t_table_TFORCED_WHITESPACE(self, token):
         r'<br/s?/?>'
+        return token
+    
+    
+    # Wikitable state
+    def t_wikitable_WIKITABLE(self, token):
+        r'\{\|'
+        token.lexer.begin('wikitable')
+        return token
+    
+    def t_wikitable_E_WIKITABLE(self, token):
+        r'\|\}'
+        token.lexer.begin('INITIAL')
         return token
     
     # Tokens to be checked before HTML state
