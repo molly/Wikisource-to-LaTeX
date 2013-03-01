@@ -29,72 +29,58 @@ class Tokenizer(object):
 # TOKEN DECLARATIONS
 #===================================================================================================
     tokens = (
-              'NOINCLUDE', # <noinclude>
-              'E_NOINCLUDE', # </noinclude>
-              'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
-              'EXTRANEOUS_HTML', # <div>, <p>, etc.
-              'DECLASSIFIED', # Declassified per Executive Order... Date: 2011
-              'SECRET', # TOP SECRET - Sensitive
-              'PAGENUM', # Taken from running header
+            # Table state
               'TABLE', # Beginning of table <table>
               'E_TABLE', # End of table </table>
               'TROW', # Beginning of table row <tr>
               'E_TROW', # End of table row </tr>
               'TITEM', # Beginning of table item <td>
               'E_TITEM', # End of table item, indicated by a newline in table state
+            # Tokens to check before HTML state  
+              'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
+              'DECLASSIFIED', # Declassified per Executive Order... Date: 2011
+              'SECRET', # TOP SECRET - Sensitive
+            # HTML state
+              'HTML', # Beginning of HTML tag
+              'E_HTML', # Ending of HTML tag
               'OLIST', # Ordered list <ol>
               'E_OLIST', # End of ordered list </ol>
               'LITEM', # List item <li>
               'E_LITEM', # End of list item </li>
-              'WLINK', # For links to Wikipedia, Wiktionary, etc.
+              'NOINCLUDE', # <noinclude>
+              'E_NOINCLUDE', # </noinclude>
               'REFLIST', # <references/>
-              'UNDERLINED', # {{u|...}}
-              'ITALICIZED', # ''...''
-              'BOLDED', # '''...'''
-              'CINDENT', # Continued indent <noinclude>:</noinclude>
+              'FORCED_WHITESPACE', # <br />
+              'EXTRANEOUS_HTML', # <div>, <p>, etc.
+              # General tokens (INITIAL state)
+              'PSPACE', # {{nop}}
+              'CINDENT', # Continued indent from prev page <noinclude>:</noinclude>
               'INDENT', # Line preceded by one or more :'s
-              'WHITESPACE',
-              'WORD',
+              'PAGENUM', # Taken from running header
+              'REF', # {{Pent|I. A.|1}}
+              'CENTERED',
+              'UNDERLINED', # {{u|...}}
+              'BOLDED', # '''...'''
+              'ITALICIZED', # ''...''
+              'WLINK', # For links to Wikipedia, Wiktionary, etc.
+              'ELLIPSES', # ... or ....
               'PUNCT',
+              'WORD',
               'NUMBER',
-              'LTGT' # TEMPORARY
+              'WHITESPACE',
               )
 #===================================================================================================
 # STATES
 #===================================================================================================
     states = (
               ('table', 'inclusive'),
+              ('html', 'exclusive')
               )
 
 #===================================================================================================
 # TOKEN DEFINITIONS
 #===================================================================================================
-    def t_CINDENT(self, token):
-        r'<noinclude>\:</noinclude>'
-        return token
-    
-    def t_INDENT(self, token):
-        r'(?:\n|\r|<br/>)+(?P<colons>\:+)'
-        token.value = token.lexer.lexmatch.group('colons')
-        return token
-      
-    def t_NOINCLUDE(self, token):
-        r'<noinclude>\n?'
-        return token
-    
-    def t_E_NOINCLUDE(self, token):
-        r'</noinclude>\n?'
-        return token
-    
-    def t_SECRET(self, token):
-        r'[{]{2}center\|(?:.*?)TOP(?:.*?)[}]{2,4}'
-        return token
-    
-    def t_PAGENUM(self, token):
-        '[{]{2}rh\|center=\s?(?P<num>[A-Z]+\-[\d]+)\s?\|right=(.*?)[}]{2}'
-        token.value = token.lexer.lexmatch.group('num')
-        return token
-    
+    # TABLE STATE
     def t_TABLE(self, token):
         r'<table(?:.*?)>\n'
         token.lexer.begin('table') # Begin table state
@@ -118,25 +104,11 @@ class Tokenizer(object):
         return token
     
     def t_table_E_TITEM(self, token):
-        r'\n'
+        r'\n+'
         return token
     
-    def t_OLIST(self, token):
-        r'<ol>'
-        return token
     
-    def t_E_OLIST(self, token):
-        r'</ol>'
-        return token
-    
-    def t_LITEM(self,token):
-        r'<li>'
-        return token
-    
-    def t_E_LITEM(self, token):
-        r'</li>'
-        return token
-    
+    # Tokens to be checked before HTML state
     def t_PAGEQUALITY(self, token):
         r'<pagequality\slevel="(?P<level>\d)"\suser="(?:\S*?)"\s?/>'
         token.value = token.lexer.lexmatch.group('level')
@@ -146,8 +118,89 @@ class Tokenizer(object):
         r'<b>Declassified(?:.*?)Date\:\s2011'
         return token
     
+    def t_SECRET(self, token):
+        r'[{]{2}c(?:enter)?\|(?:<u>|[{]{2}u\|)TOP(?:.*?)[}]{2,4}'
+        return token
+     
+     
+    # HTML STATE
+    def t_HTML(self, token):
+        r'<'
+        token.lexer.begin('html')
+        pass
+    
+    def t_html_E_HTML(self, token):
+        r'>'
+        token.lexer.begin('INITIAL')
+        pass
+    
+    def t_html_OLIST(self, token):
+        r'ol'
+        return token
+    
+    def t_html_E_OLIST(self, token):
+        r'/ol'
+        return token
+    
+    def t_html_LITEM(self,token):
+        r'li'
+        return token
+    
+    def t_html_E_LITEM(self, token):
+        r'/li'
+        return token
+    
+    def t_html_NOINCLUDE(self, token):
+        r'noinclude'
+        return token
+    
+    def t_html_E_NOINCLUDE(self, token):
+        r'/noinclude'
+        return token
+    
+    def t_html_REFLIST(self, token):
+        r'references\s?/'
+        pass # Ignore
+    
+    def t_html_FORCED_WHITESPACE(self, token):
+        r'br\s?/?'
+        return token
+    
+    def t_html_EXTRANEOUS_HTML(self, token):
+        r'/?(?:div|p)(?:(?:\s.*?)(?=>))?'
+        pass # Ignore
+    
+    # INITIAL STATE
+    def t_PSPACE(self, token):
+        r'[{]{2}nop[}]{2}'
+        return token
+    
+    def t_CINDENT(self, token):
+        '(?<=<noinclude>):(?=</noinclude>)'
+        return token
+    
+    def t_INDENT(self, token):
+        r'(?:\n|\r)+(?P<colons>\:+)'
+        token.value = token.lexer.lexmatch.group('colons')
+        return token
+    
+    def t_PAGENUM(self, token):
+        r'[{]{2}rh\|center=\s?(?P<num>[A-Z]+\-[\d]+)\s?\|right=(.*?)[}]{2,}'
+        token.value = token.lexer.lexmatch.group('num')
+        return token
+    
+    def t_REF(self, token):
+        r'[{]{2}Pent\|(?P<sect>.*?)\|(?P<subsect>(\d\.\d)\|)?(?P<num>\d+)[}]{2}'
+        token.value = token.lexer.lexmatch.group('sect', 'subsect', 'num')
+        return token
+    
+    def t_CENTERED(self, token):
+        r'[{]{2}c(?:enter)?\|(?P<text>.*?(?:[}]{2})?)[}]{2}'
+        token.value = token.lexer.lexmatch.group('text')
+        return token
+    
     def t_UNDERLINED(self, token):
-        r'[{]{2}u\|(?P<word>.*?)[}]{2}'
+        r'(?:[{]{2}u\||<u>)(?P<word>.*?)(?:[}]{2}|</u>)'
         token.value = token.lexer.lexmatch.group('word')
         return token
     
@@ -165,16 +218,12 @@ class Tokenizer(object):
         r'[[]{2}w(?:ikt)?:(?:.*?)\|(?P<link>.*?)[]]{2}'
         token.value = token.lexer.lexmatch.group('link')
         return token
-     
-    def t_REFLIST(self, token):
-        r'<references\s?/>'
-        pass
-
-    def t_EXTRANEOUS_HTML(self, token):
-        r'</?(?:div|p)(?:\s(?:.*?))?>'
-        pass
     
     # VERY basic matches that have to be checked last.
+    def t_ELLIPSES(self, token):
+        '[.]{3,4}'
+        return token
+    
     def t_PUNCT(self, token):
         r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~–—]"""
         return token
@@ -188,17 +237,13 @@ class Tokenizer(object):
         return token
     
     def t_WHITESPACE(self, token):
-        r'(?:\s|\t|\r|\n|<br\s?/?>)+'
-        return token
-    
-    def t_LTGT(self, token):
-        r'[<>]' # TEMPORARY
+        r'[\s\t\r\n]+'
         return token
         
 #===================================================================================================
 # ERROR HANDLING
 #===================================================================================================
-    def t_error(self, token):
+    def t_ANY_error(self, token):
         print ("Illegal character {}".format(token.value[0]))
         token.lexer.skip(1)
         
