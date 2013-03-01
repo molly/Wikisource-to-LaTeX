@@ -25,7 +25,9 @@ import codecs, logging, os, re
 import lex
 
 class Tokenizer(object):
-    #Token list
+#===================================================================================================
+# TOKEN DECLARATIONS
+#===================================================================================================
     tokens = (
               'NOINCLUDE', # <noinclude>
               'E_NOINCLUDE', # </noinclude>
@@ -57,12 +59,16 @@ class Tokenizer(object):
               'NUMBER',
               'LTGT' # TEMPORARY
               )
-    
+#===================================================================================================
+# STATES
+#===================================================================================================
     states = (
               ('table', 'inclusive'),
               )
 
-    # Matches  
+#===================================================================================================
+# TOKEN DEFINITIONS
+#===================================================================================================
     def t_CINDENT(self, token):
         r'<noinclude>\:</noinclude>'
         return token
@@ -94,8 +100,8 @@ class Tokenizer(object):
         token.lexer.begin('table') # Begin table state
         return token
         
-    def t_E_TABLE(self, token):
-        r'</table>\n'
+    def t_table_E_TABLE(self, token):
+        r'</table>\n?'
         token.lexer.begin('INITIAL') # End table state
         return token
     
@@ -170,7 +176,7 @@ class Tokenizer(object):
     
     # VERY basic matches that have to be checked last.
     def t_PUNCT(self, token):
-        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~]"""
+        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~–—]"""
         return token
     
     def t_WORD(self, token):
@@ -189,11 +195,16 @@ class Tokenizer(object):
         r'[<>]' # TEMPORARY
         return token
         
-    # Error handling
+#===================================================================================================
+# ERROR HANDLING
+#===================================================================================================
     def t_error(self, token):
         print ("Illegal character {}".format(token.value[0]))
         token.lexer.skip(1)
         
+#===================================================================================================
+# MISCELLANEOUS FUNCTIONS
+#===================================================================================================
     def __init__(self):
         self.logger = logging.getLogger("W2L")
     
@@ -206,4 +217,4 @@ class Tokenizer(object):
             print(token)
         
     def build(self):
-        self.lexer = lex.lex(module=self)
+        self.lexer = lex.lex(module=self, reflags=re.DOTALL)
