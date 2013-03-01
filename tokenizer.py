@@ -33,6 +33,7 @@ class Tokenizer(object):
               'EXTRANEOUS_HTML', # <div>, <p>, etc.
               'DECLASSIFIED', # Declassified per Executive Order... Date: 2011
               'SECRET', # TOP SECRET - Sensitive
+              'PAGENUM', # Taken from running header
               'TABLE', # Beginning of table <table>
               'E_TABLE', # End of table </table>
               'TROW', # Beginning of table row <tr>
@@ -44,9 +45,12 @@ class Tokenizer(object):
               'LITEM', # List item <li>
               'E_LITEM', # End of list item </li>
               'WLINK', # For links to Wikipedia, Wiktionary, etc.
+              'REFLIST', # <references/>
               'UNDERLINED', # {{u|...}}
               'ITALICIZED', # ''...''
               'BOLDED', # '''...'''
+              'CINDENT', # Continued indent <noinclude>:</noinclude>
+              'INDENT', # Line preceded by one or more :'s
               'WHITESPACE',
               'WORD',
               'PUNCT',
@@ -58,7 +62,16 @@ class Tokenizer(object):
               ('table', 'inclusive'),
               )
 
-    # Matches
+    # Matches  
+    def t_CINDENT(self, token):
+        r'<noinclude>\:</noinclude>'
+        return token
+    
+    def t_INDENT(self, token):
+        r'(?:\n|\r|<br/>)+(?P<colons>\:+)'
+        token.value = token.lexer.lexmatch.group('colons')
+        return token
+      
     def t_NOINCLUDE(self, token):
         r'<noinclude>\n?'
         return token
@@ -68,7 +81,12 @@ class Tokenizer(object):
         return token
     
     def t_SECRET(self, token):
-        r'[{]{2}center\|\<u\>TOP(?:.*?)[}]{2}'
+        r'[{]{2}center\|(?:.*?)TOP(?:.*?)[}]{2,4}'
+        return token
+    
+    def t_PAGENUM(self, token):
+        '[{]{2}rh\|center=\s?(?P<num>[A-Z]+\-[\d]+)\s?\|right=(.*?)[}]{2}'
+        token.value = token.lexer.lexmatch.group('num')
         return token
     
     def t_TABLE(self, token):
@@ -138,17 +156,21 @@ class Tokenizer(object):
         return token
     
     def t_WLINK(self, token):
-        r'[[]{2}w(?:ikt)?:(?:.*?)[]]{2}'
+        r'[[]{2}w(?:ikt)?:(?:.*?)\|(?P<link>.*?)[]]{2}'
+        token.value = token.lexer.lexmatch.group('link')
         return token
      
-    # Ignores
+    def t_REFLIST(self, token):
+        r'<references\s?/>'
+        pass
+
     def t_EXTRANEOUS_HTML(self, token):
         r'</?(?:div|p)(?:\s(?:.*?))?>'
         pass
     
     # VERY basic matches that have to be checked last.
     def t_PUNCT(self, token):
-        r"""[!@\#\$\%\^&\*\(\)\-–—\+=\[\]\{\}\\\|\:;"',\.\?/~]"""
+        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~]"""
         return token
     
     def t_WORD(self, token):
@@ -183,5 +205,5 @@ class Tokenizer(object):
                 break      # No more input
             print(token)
         
-    def build(self,**kwargs):
-        self.lexer = lex.lex(module=self, reflags=re.DOTALL, **kwargs)
+    def build(self):
+        self.lexer = lex.lex(module=self)

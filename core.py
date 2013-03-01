@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import codecs, logging, os
+import codecs, logging, os, lex
 from api import Document
 from tokenizer import Tokenizer
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         
     # Open and read test file
     with codecs.open(os.curdir+'/text/3/1.txt', 'r', 'utf-8') as original:
-        test_data = original.read(500)
+        test_data = original.read(2000)
     original.close()
 
     # Begin!
