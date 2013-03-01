@@ -36,6 +36,13 @@ class Tokenizer(object):
               'E_TROW', # End of table row </tr>
               'TITEM', # Beginning of table item <td>
               'E_TITEM', # End of table item, indicated by a newline in table state
+              'TNOINCLUDE', # <noinclude> within table state
+              'TE_NOINCLUDE', # </noinclude> within table state
+              'TOLIST', # <ol> in table
+              'TE_OLIST', # </ol> in table
+              'TLITEM', # <li> in table
+              'TE_LITEM', # </li> in table
+              'TFORCED_WHITESPACE', # <br/> in a table
             # Tokens to check before HTML state  
               'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
               'DECLASSIFIED', # Declassified per Executive Order... Date: 2011
@@ -50,6 +57,8 @@ class Tokenizer(object):
               'NOINCLUDE', # <noinclude>
               'E_NOINCLUDE', # </noinclude>
               'REFLIST', # <references/>
+              'REF', # <ref>
+              'E_REF', # </ref>
               'FORCED_WHITESPACE', # <br />
               'EXTRANEOUS_HTML', # <div>, <p>, etc.
               # General tokens (INITIAL state)
@@ -57,8 +66,8 @@ class Tokenizer(object):
               'CINDENT', # Continued indent from prev page <noinclude>:</noinclude>
               'INDENT', # Line preceded by one or more :'s
               'PAGENUM', # Taken from running header
-              'REF', # {{Pent|I. A.|1}}
-              'CENTERED',
+              'PENT', # {{Pent|I. A.|1}}
+              'CENTERED', # {{center|...}} or {{c|...}}
               'UNDERLINED', # {{u|...}}
               'BOLDED', # '''...'''
               'ITALICIZED', # ''...''
@@ -107,6 +116,33 @@ class Tokenizer(object):
         r'\n+'
         return token
     
+    def t_table_TNOINCLUDE(self, token):
+        r'<noinclude>'
+        return token
+    
+    def t_table_TE_NOINCLUDE(self, token):
+        r'</noinclude>'
+        return token
+    
+    def t_table_TOLIST(self, token):
+        r'<ol>'
+        return token
+    
+    def t_table_TE_OLIST(self, token):
+        r'</ol>'
+        return token
+    
+    def t_table_TLITEM(self,token):
+        r'<li>'
+        return token
+    
+    def t_table_TE_LITEM(self, token):
+        r'</li>'
+        return token
+    
+    def t_table_TFORCED_WHITESPACE(self, token):
+        r'<br/s?/?>'
+        return token
     
     # Tokens to be checked before HTML state
     def t_PAGEQUALITY(self, token):
@@ -121,7 +157,6 @@ class Tokenizer(object):
     def t_SECRET(self, token):
         r'[{]{2}c(?:enter)?\|(?:<u>|[{]{2}u\|)TOP(?:.*?)[}]{2,4}'
         return token
-     
      
     # HTML STATE
     def t_HTML(self, token):
@@ -162,12 +197,21 @@ class Tokenizer(object):
         r'references\s?/'
         pass # Ignore
     
+    def t_html_REF(self, token):
+        r'ref(?:\sname=\s?(?P<name>.*?)\s?/?)?(?=>)'
+        token.value = token.lexer.lexmatch.group('name')
+        return token
+        
+    def t_html_E_REF(self, token):
+        r'/ref'
+        return token
+    
     def t_html_FORCED_WHITESPACE(self, token):
         r'br\s?/?'
         return token
     
     def t_html_EXTRANEOUS_HTML(self, token):
-        r'/?(?:div|p)(?:(?:\s.*?)(?=>))?'
+        r'/?(?:div|p|span)(?:(?:\s.*?)(?=>))?'
         pass # Ignore
     
     # INITIAL STATE
@@ -189,7 +233,7 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('num')
         return token
     
-    def t_REF(self, token):
+    def t_PENT(self, token):
         r'[{]{2}Pent\|(?P<sect>.*?)\|(?P<subsect>(\d\.\d)\|)?(?P<num>\d+)[}]{2}'
         token.value = token.lexer.lexmatch.group('sect', 'subsect', 'num')
         return token
@@ -225,11 +269,11 @@ class Tokenizer(object):
         return token
     
     def t_PUNCT(self, token):
-        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~–—]"""
+        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~°–—]"""
         return token
     
     def t_WORD(self, token):
-        r'[a-zA-Z]+'
+        r'[a-zA-Zé]+'
         return token
     
     def t_NUMBER(self, token):
@@ -244,14 +288,15 @@ class Tokenizer(object):
 # ERROR HANDLING
 #===================================================================================================
     def t_ANY_error(self, token):
-        print ("Illegal character {}".format(token.value[0]))
+        print ("Illegal character {} at line {}, position {}.".format(token.value[0], token.lineno, token.lexpos))
         token.lexer.skip(1)
-        
+        self.tfile.write("\nIllegal character {} at line {}, position {}.".format(token.value[0], token.lineno, token.lexpos))
 #===================================================================================================
 # MISCELLANEOUS FUNCTIONS
 #===================================================================================================
     def __init__(self):
         self.logger = logging.getLogger("W2L")
+        self.tfile = codecs.open(os.curdir+'tokens.txt', 'w', 'utf-8')
     
     def analyze(self, data):
         self.lexer.input(data)
@@ -259,7 +304,8 @@ class Tokenizer(object):
             token = self.lexer.token()
             if not token:
                 break      # No more input
-            print(token)
+            self.tfile.write(str(token)+'\n')
+        self.tfile.close()
         
     def build(self):
         self.lexer = lex.lex(module=self, reflags=re.DOTALL)

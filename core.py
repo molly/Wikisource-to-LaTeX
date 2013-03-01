@@ -43,7 +43,7 @@ if __name__ == "__main__":
         
     # Open and read test file
     with codecs.open(os.curdir+'/text/3/1.txt', 'r', 'utf-8') as original:
-        test_data = original.read(2000)
+        test_data = original.read()
     original.close()
 
     # Begin!
