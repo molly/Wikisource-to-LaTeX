@@ -312,7 +312,7 @@ class Tokenizer(object):
 #===================================================================================================
     def __init__(self):
         self.logger = logging.getLogger("W2L")
-        self.tfile = codecs.open(os.curdir+'tokens.txt', 'w', 'utf-8')
+        self.tfile = codecs.open('tokens.txt', 'w', 'utf-8')
     
     def analyze(self, data):
         self.lexer.input(data)

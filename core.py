@@ -44,12 +44,12 @@ if __name__ == "__main__":
         logger.debug("Parsing JSON to TXT.")
         doc.json_to_text()
         
-#    # Open and read test file
-#    with codecs.open(os.curdir+'/text/3/1.txt', 'r', 'utf-8') as original:
-#        test_data = original.read()
-#    original.close()
-#
-#    # Begin!
-#    lexer = Tokenizer()
-#    lexer.build()
-#    lexer.analyze(test_data)
+    # Open and read test file
+    with codecs.open(os.curdir+'/text/3/1.txt', 'r', 'utf-8') as original:
+        test_data = original.read()
+    original.close()
+
+    # Begin!
+    lexer = Tokenizer()
+    lexer.build()
+    lexer.analyze(test_data)
