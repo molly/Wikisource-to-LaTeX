@@ -22,6 +22,7 @@
 import codecs, logging, os, lex
 from api import Document
 from tokenizer import Tokenizer
+from tokenparser import Parser
 
 def setup_logging():
     logger=logging.getLogger("W2L")
@@ -46,10 +47,17 @@ if __name__ == "__main__":
         
     # Open and read test file
     with codecs.open(os.curdir+'/text/3/1.txt', 'r', 'utf-8') as original:
-        test_data = original.read()
+        test_data = original.read(100)
     original.close()
 
     # Begin!
     lexer = Tokenizer()
     lexer.build()
     lexer.analyze(test_data)
+    
+    yaccer = Parser()
+    with codecs.open('tokens.txt', 'r', 'utf-8') as tokendata:
+        data = tokendata.read()
+    tokendata.close()
+    yaccer.parse(data)
+    

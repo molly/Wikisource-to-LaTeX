@@ -47,9 +47,11 @@ class Tokenizer(object):
               'WIKITABLE', # Beginning of table {|
               'E_WIKITABLE', # End of table |}
             # Tokens to check before HTML state  
+              'INTERNALLINK',
               'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
               'DECLASSIFIED', # Declassified per Executive Order... Date: 2011
               'SECRET', # TOP SECRET - Sensitive
+              'RUNHEAD', # Running header
             # HTML state
               'HTML', # Beginning of HTML tag
               'E_HTML', # Ending of HTML tag
@@ -93,7 +95,7 @@ class Tokenizer(object):
 #===================================================================================================
 # TOKEN DEFINITIONS
 #===================================================================================================
-    # TABLE STATE
+    # TABLE STATE    
     def t_TABLE(self, token):
         r'<table(?:.*?)>\n'
         token.lexer.begin('table') # Begin table state
@@ -161,6 +163,11 @@ class Tokenizer(object):
         return token
     
     # Tokens to be checked before HTML state
+    def t_INTERNALLINK(self, token):
+        r'[[]{2}United\sStates(?:.*?)Defense/(?P<subpage>.*?)\#(?P<anchor>.*?)\|(?P<title>.*?)[]]{2}'
+        token.value = (token.lexer.lexmatch.group('subpage','anchor','title'))
+        return token 
+    
     def t_PAGEQUALITY(self, token):
         r'<pagequality\slevel="(?P<level>\d)"\suser="(?:\S*?)"\s?/>'
         token.value = token.lexer.lexmatch.group('level')
@@ -172,6 +179,11 @@ class Tokenizer(object):
     
     def t_SECRET(self, token):
         r'[{]{2}c(?:enter)?\|(?:<u>|[{]{2}u\|)TOP(?:.*?)[}]{2,4}'
+        return token
+    
+    def t_RUNHEAD(self, token):
+        r'[{]{2}rh(?:\|left=\s?(?P<left>.*?)\s?)?(?:\|center=\s?(?P<center>.*?)\s?)?(?:\|right=\s?(?P<right>.*?)\s?)?[}]{2}(?!\})'
+        token.value = token.lexer.lexmatch.group('left','center','right')
         return token
      
     # HTML STATE
@@ -304,9 +316,11 @@ class Tokenizer(object):
 # ERROR HANDLING
 #===================================================================================================
     def t_ANY_error(self, token):
-        print ("Illegal character {} at line {}, position {}.".format(token.value[0], token.lineno, token.lexpos))
+        print ("Illegal character {} at line {}, position {}."
+               .format(token.value[0], token.lineno, token.lexpos))
         token.lexer.skip(1)
-        self.tfile.write("\nIllegal character {} at line {}, position {}.".format(token.value[0], token.lineno, token.lexpos))
+        self.tfile.write("\nIllegal character {} at line {}, position {}."
+                         .format(token.value[0], token.lineno, token.lexpos))
 #===================================================================================================
 # MISCELLANEOUS FUNCTIONS
 #===================================================================================================
