@@ -325,10 +325,13 @@ class Tokenizer(object):
 # MISCELLANEOUS FUNCTIONS
 #===================================================================================================
     def __init__(self):
+        '''Initiate logging, open a file to store tokens, build the lexer.'''
         self.logger = logging.getLogger("W2L")
         self.tfile = codecs.open('tokens.txt', 'w', 'utf-8')
+        self.lexer = lex.lex(module=self, reflags=re.DOTALL)
     
     def analyze(self, data):
+        '''Read through the text file and tokenize.'''
         self.lexer.input(data)
         while True:
             token = self.lexer.token()
@@ -336,6 +339,3 @@ class Tokenizer(object):
                 break      # No more input
             self.tfile.write(str(token)+'\n')
         self.tfile.close()
-        
-    def build(self):
-        self.lexer = lex.lex(module=self, reflags=re.DOTALL)
