@@ -30,6 +30,21 @@ class Parser(object):
         '''Initiate logging, build the parser.'''
         self.logger = logging.getLogger("W2L")
         self.parser = yacc.yacc(module=self)
+        
+    def p_start(self, p):
+        'start : word'
+        p[0] = p[1]
+        
+    def p_word(self, p):
+        'word : WORD'
+        print(WORD)
+        
+    def p_error(self, t):
+        if t:
+            self.logger.error("Syntax error. Passing.")
+            pass
+        else:
+            raise SyntaxError
     
     def parse(self, data):
         '''Perform the parsing.'''
