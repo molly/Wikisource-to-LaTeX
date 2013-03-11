@@ -98,10 +98,9 @@ class Document(object):
         1-50 pages.'''
         
         current_page = self.pages.popitem(False)
-        self.logger.debug("Requesting content for {}.".format(current_page[0]))
+        self.logger.debug("Requesting content for {}".format(current_page[0]))
         filename = parse.quote(current_page[1].pop(0))
         pages = self.split_calls(current_page[1])
-        print(pages)
 
         titles = ""
         api_calls = list()
@@ -208,7 +207,7 @@ class Document(object):
                                           "try running the program again.")
                     exit()
                 except Exception as e:
-                    print ("Error occurred when trying to unpickle the page list: {}"
+                    self.logger.exception("Error occurred when trying to unpickle the page list: {}"
                            .format(e.strerror))
             file.close()
             

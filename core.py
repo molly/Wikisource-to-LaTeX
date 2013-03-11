@@ -19,10 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import codecs, logging, os, lex
+import codecs, logging, os
+import ply.lex as lex
 from api import Document
 from tokenizer import Tokenizer
-from tokenparser import Parser
+#from tokenparser import Parser
 
 def setup_logging():
     logger=logging.getLogger("W2L")
@@ -55,9 +56,9 @@ if __name__ == "__main__":
     lexer.build()
     lexer.analyze(test_data)
     
-    yaccer = Parser()
-    with codecs.open('tokens.txt', 'r', 'utf-8') as tokendata:
-        data = tokendata.read()
-    tokendata.close()
-    yaccer.parse(data)
+#    yaccer = Parser()
+#    with codecs.open('tokens.txt', 'r', 'utf-8') as tokendata:
+#        data = tokendata.read()
+#    tokendata.close()
+#    yaccer.parse(data)
     
