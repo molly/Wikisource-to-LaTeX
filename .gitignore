@@ -39,3 +39,4 @@ nosetests.xml
 *.pkl
 raw
 text
+*.txt
