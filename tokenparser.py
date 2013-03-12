@@ -19,41 +19,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging, tokenizer
-import ply.yacc as yacc
+import logging
 
 class Parser(object):
-    # Get token list from the tokenizer module
-    tokens = tokenizer.Tokenizer.tokens
-    
     def __init__(self):
-        '''Initiate logging, build the parser.'''
         self.logger = logging.getLogger("W2L")
-        self.parser = yacc.yacc(module=self)
         
-    def p_start(self, p):
-        'start : word'
-        p[0] = p[1]
-        
-    def p_word(self, p):
-        'word : WORD'
-        print(WORD)
-        
-    def p_error(self, t):
-        if t:
-            self.logger.error("Syntax error. Passing.")
-            pass
-        else:
-            raise SyntaxError
-    
-    def parse(self, data):
-        '''Perform the parsing.'''
-        while True:
-            try:
-                s = data
-            except EOFError:
-                break
-            if not s:
-                continue
-            result = self.parser.parse(s)
-            print(result)
+    def dispatch(self, t_list):
+        for token in t_list:
+            print(token[0])

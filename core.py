@@ -19,11 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import codecs, logging, os, tokenparser
-import ply.lex as lex
-from api import Document
+import codecs, logging, os
 from tokenizer import Tokenizer
-
+from tokenparser import Parser
+from api import Document
 
 def setup_logging():
     logger=logging.getLogger("W2L")
@@ -47,17 +46,13 @@ if __name__ == "__main__":
 #        doc.json_to_text()
         
     # Open and read test file
-    with codecs.open('test.txt', 'r', 'utf-8') as original:
-        test_data = original.read(100)
+    #with codecs.open(os.curdir + '/text/3/1.txt', 'r', 'utf-8') as original:
+    with codecs.open('1.txt', 'r', 'utf-8') as original:
+        test_data = original.read()
     original.close()
 
     # Begin!
-    lexer = Tokenizer()
-    lexer.analyze(test_data)
-    
-    yaccer = tokenparser.Parser()
-    with codecs.open('tokens.txt', 'r', 'utf-8') as tokendata:
-        data = tokendata.read()
-    tokendata.close()
-    yaccer.parse(data)
-    
+    tokenizer = Tokenizer()
+    parser = Parser()
+    token_list = tokenizer.analyze(test_data)
+    parser.dispatch(token_list)

@@ -21,7 +21,7 @@
 
 __all__ = ['Tokenizer']
 
-import codecs, logging, os, re
+import codecs, logging, re
 import lex
 
 class Tokenizer(object):
@@ -327,15 +327,16 @@ class Tokenizer(object):
     def __init__(self):
         '''Initiate logging, open a file to store tokens, build the lexer.'''
         self.logger = logging.getLogger("W2L")
-        self.tfile = codecs.open('tokens.txt', 'w', 'utf-8')
         self.lexer = lex.lex(module=self, reflags=re.DOTALL)
     
     def analyze(self, data):
         '''Read through the text file and tokenize.'''
         self.lexer.input(data)
+        self.token_list = list()
         while True:
             token = self.lexer.token()
             if not token:
                 break      # No more input
-            self.tfile.write(str(token)+'\n')
-        self.tfile.close()
+            l_token = [token.type, token.value]
+            self.token_list.append(l_token)
+        return self.token_list
