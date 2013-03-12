@@ -22,9 +22,61 @@
 import logging
 
 class Parser(object):
-    def __init__(self):
+    def __init__(self, outputfile):
         self.logger = logging.getLogger("W2L")
+        self.output = outputfile
         
     def dispatch(self, t_list):
         for token in t_list:
-            print(token[0])
+            self.value = token[1]
+            command = 'self.{0}()'.format(token[0].lower())
+            try:
+                exec(command)
+            except AttributeError:
+                self.logger.debug("No function.")
+                
+    def write(self, text):
+        self.output.write(text)
+        
+#===================================================================================================
+# PARSING FUNCTIONS
+#===================================================================================================
+    # TABLE FUNCTIONS
+    
+    # WIKITABLE FUNCTIONS
+    
+    # PRE-HTML TOKENS
+    
+    # HTML TOKENS
+    
+    # POST-HTML TOKENS
+    
+    # BASIC TOKENS
+    def ellipses(self):
+        '''Write ellipses to file without changing anything.'''
+        self.write(self.value)
+    
+    def punct(self):
+        '''Write punctuation to file, escaping any characters with special functions in LaTeX.'''
+        escape = ["#", "$", "%", "&", "~", "_", "^", "\\", "{", "}"]
+        if self.value in escape:
+            self.value = "\\" + self.value
+        self.write(self.value)
+    
+    def word(self):
+        '''Write word to file, using compose codes for any accented characters.'''
+        if "é" in self.value:
+            self.value = self.value.replace("é", "\\'{e}")
+        self.write(self.value)
+        
+    def number(self):
+        '''Write number(s) to file without changing anything.'''
+        self.write(self.value)
+        
+    def whitespace(self):
+        '''Replace newlines with '\\', replace tabs with spaces, leave spaces the same.'''
+        if '\r' in self.value or '\n' in self.value:
+            self.value = ' \\\\\n'
+        else:
+            self.value = ' '
+        self.write(self.value)

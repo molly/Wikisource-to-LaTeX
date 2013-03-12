@@ -53,6 +53,8 @@ if __name__ == "__main__":
 
     # Begin!
     tokenizer = Tokenizer()
-    parser = Parser()
     token_list = tokenizer.analyze(test_data)
-    parser.dispatch(token_list)
+    with codecs.open('testoutput.txt', 'w', 'utf-8') as outputfile:
+        outputfile.write('\\usepackage[utf8]{inputenc}\n')
+        parser = Parser(outputfile)
+        parser.dispatch(token_list)
