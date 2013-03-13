@@ -248,7 +248,7 @@ class Tokenizer(object):
         return token
     
     def t_CINDENT(self, token):
-        '(?<=<noinclude>):(?=</noinclude>)'
+        r'(?<=<noinclude>):(?=</noinclude>)'
         return token
     
     def t_INDENT(self, token):
@@ -293,7 +293,7 @@ class Tokenizer(object):
     
     # VERY basic matches that have to be checked last.
     def t_ELLIPSES(self, token):
-        '[.]{3,4}'
+        r'[.]{3,4}'
         return token
     
     def t_PUNCT(self, token):

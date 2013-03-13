@@ -39,4 +39,6 @@ nosetests.xml
 *.pkl
 raw
 text
+design
+lextab.py
 *.txt

@@ -32,13 +32,16 @@ class Parser(object):
             command = 'self.{0}()'.format(token[0].lower())
             try:
                 exec(command)
-            except AttributeError:
-                self.logger.debug("No function.")
+            except AttributeError as e:
+                self.logger.debug("No function: {}.".format(e))
             else:
                 self.write(self.value)
                 
     def write(self, text):
-        self.output.write(text)
+        if type(text) is tuple:
+            pass
+        else:
+            self.output.write(text)
         
 #===================================================================================================
 # PARSING FUNCTIONS
@@ -48,60 +51,60 @@ class Parser(object):
         #TODO: TABLE
         pass
     
-    def table_e_table(self):
+    def e_table(self):
         #TODO: E_TABLE
         pass
     
-    def table_trow(self):
+    def trow(self):
         #TODO: TROW
         pass
     
-    def table_e_trow(self):
+    def e_trow(self):
         #TODO: E_TROW
         pass
     
-    def table_titem(self):
+    def titem(self):
         #TODO: TITEM
         pass
     
-    def table_e_titem(self):
+    def e_titem(self):
         #TODO: E_TITEM
         pass
     
-    def table_tnoinclude(self):
+    def tnoinclude(self):
         #TODO: TNOINCLUDE
         pass
     
-    def table_te_noinclude(self):
+    def te_noinclude(self):
         #TODO: TE_NOINCLUDE
         pass
     
-    def table_tolist(self):
+    def tolist(self):
         #TODO: TOLIST
         pass
     
-    def table_te_olist(self):
+    def te_olist(self):
         #TODO: TE_OLIST
         pass
     
-    def table_tlitem(self):
+    def tlitem(self):
         #TODO: TLITEM
         pass
     
-    def table_te_litem(self):
+    def te_litem(self):
         #TODO: TE_LITEM
         pass
     
-    def table_tforced_whitespace(self):
+    def tforced_whitespace(self):
         #TODO: TFORCED_WHITESPACE
         pass
     
     # WIKITABLE FUNCTIONS
-    def wikitable_wikitable(self):
+    def wikitable(self):
         #TODO: WIKITABLE
         pass
     
-    def wikitable_e_wikitable(self):
+    def e_wikitable(self):
         #TODO: E_WIKITABLE
         pass
     
@@ -127,19 +130,19 @@ class Parser(object):
         pass
     
     # HTML TOKENS
-    def html_olist(self):
+    def olist(self):
         '''Begin ordered list.'''
         self.value = '\\begin{enumerate}'
     
-    def html_e_olist(self):
+    def e_olist(self):
         '''End ordered list.'''
         self.value = '\\end{enumerate}'
     
-    def html_litem(self):
+    def litem(self):
         '''Format list item.'''
         self.value = "\item " + self.value
         
-    def html_e_litem(self):
+    def e_litem(self):
         '''Do nothing.'''
         self.value = ""
         
@@ -147,19 +150,19 @@ class Parser(object):
         # TODO: NOINCLUDE
         pass
     
-    def html_e_noinclude(self):
+    def e_noinclude(self):
         # TODO: E_NOINCLUDE
         pass
     
-    def html_reflist(self):
+    def reflist(self):
         #TODO: REFLIST
         pass
     
-    def html_ref(self):
+    def ref(self):
         #TODO: REF
         pass
     
-    def html_forced_whitespace(self):
+    def forced_whitespace(self):
         '''Add whitespace.'''
         self.value = ' \\\\\n'
     
