@@ -29,13 +29,14 @@ class Parser(object):
     def dispatch(self, t_list):
         for token in t_list:
             self.value = token[1]
-            command = 'self.{0}()'.format(token[0].lower())
-            try:
-                exec(command)
-            except AttributeError as e:
-                self.logger.debug("No function: {}.".format(e))
-            else:
-                self.write(self.value)
+            if self.value:
+                command = 'self.{0}()'.format(token[0].lower())
+                try:
+                    exec(command)
+                except AttributeError as e:
+                    self.logger.debug("No function: {}.".format(e))
+                else:
+                    self.write(self.value)
                 
     def write(self, text):
         if type(text) is tuple:
@@ -162,6 +163,10 @@ class Parser(object):
         #TODO: REF
         pass
     
+    def e_ref(self):
+        #TODDO: E_REF
+        pass
+    
     def forced_whitespace(self):
         '''Add whitespace.'''
         self.value = ' \\\\\n'
@@ -210,16 +215,23 @@ class Parser(object):
     
     # BASIC TOKENS
     def ellipses(self):
-        '''Ellipses (three and four dots)'''
+        '''Convert to proper ellipsis formatting.'''
         if self.value == "...":
-            self.value == "\\lips"
+            self.value = "\\ldots"
         else:
-            self.value == "\\lips."
+            self.value = "\\ldots."
+    def checkbox_empty(self):
+        #TODO: CHECKBOX_EMPTY
+        pass
+    
+    def checkbox_checked(self):
+        #TODO: CHECKBOX_FULL
+        pass
     
     def punct(self):
         # TODO: Figure out `` and " for quotes
         '''Write punctuation to file, escaping any characters with special functions in LaTeX.'''
-        escape = ["#", "$", "%", "&", "~", "_", "^", "\\", "{", "}"]
+        escape = ["#", "$", "%", "&", "~", "_", "^", "\\", "{", "}", "|"]
         if self.value in escape:
             self.value = "\\" + self.value
         elif self.value == "°":

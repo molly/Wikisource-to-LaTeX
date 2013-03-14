@@ -77,7 +77,10 @@ class Tokenizer(object):
               'BOLDED', # '''...'''
               'ITALICIZED', # ''...''
               'WLINK', # For links to Wikipedia, Wiktionary, etc.
+              # Very basic tokens
               'ELLIPSES', # ... or ....
+              'CHECKBOX_EMPTY',
+              'CHECKBOX_CHECKED',
               'PUNCT',
               'WORD',
               'NUMBER',
@@ -296,6 +299,14 @@ class Tokenizer(object):
         r'[.]{3,4}'
         return token
     
+    def t_CHECKBOX_EMPTY(self, token):
+        r'□'
+        return token
+    
+    def t_CHECKBOX_CHECKED(self,token):
+        r'▣'
+        return token
+    
     def t_PUNCT(self, token):
         r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~°–—]"""
         return token
@@ -316,10 +327,8 @@ class Tokenizer(object):
 # ERROR HANDLING
 #===================================================================================================
     def t_ANY_error(self, token):
-        print ("Illegal character {} at line {}, position {}."
-               .format(token.value[0], token.lineno, token.lexpos))
         token.lexer.skip(1)
-        self.tfile.write("\nIllegal character {} at line {}, position {}."
+        self.logger.info("Illegal character {} at line {}, position {}."
                          .format(token.value[0], token.lineno, token.lexpos))
 #===================================================================================================
 # MISCELLANEOUS FUNCTIONS

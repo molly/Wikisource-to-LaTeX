@@ -46,8 +46,8 @@ if __name__ == "__main__":
 #        doc.json_to_text()
         
     # Open and read test file
-    with codecs.open(os.curdir + '/text/3/1.txt', 'r', 'utf-8') as original:
-        test_data = original.read(5000)
+    with codecs.open(os.curdir + '/text/0/0.txt', 'r', 'utf-8') as original:
+        test_data = original.read()
     original.close()
 
     # Begin!
@@ -55,6 +55,6 @@ if __name__ == "__main__":
     token_list = tokenizer.analyze(test_data)
     with codecs.open('testoutput.txt', 'w', 'utf-8') as outputfile:
         outputfile.write('\\usepackage[utf8]{inputenc}\n')
-        outputfile.write('\\userpackage{lips}\n');
+        outputfile.write('\\usepackage{lips}\n');
         parser = Parser(outputfile)
         parser.dispatch(token_list)
