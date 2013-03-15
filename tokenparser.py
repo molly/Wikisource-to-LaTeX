@@ -116,11 +116,13 @@ class Parser(object):
     
     def pagequality(self):
         #TODO: PAGEQUALITY
+        self.value = ""
         pass
     
     def declassified(self):
-        #TODO: DECLASSIFIED
-        pass
+        self.value = ("\\begin{spacing}{0.7}\n\\begin{center}\n\\begin{scriptsize}\\textbf" 
+        "{Declassified} per Executive Order 13526, Section 3.3\\\\NND Project Number: NND 63316." 
+        "By: NWD Date: 2011\n\\end{scriptsize}\n")
     
     def secret(self):
         #TODO: SECRET
@@ -148,11 +150,13 @@ class Parser(object):
         self.value = ""
         
     def noinclude(self):
-        # TODO: NOINCLUDE
+        #TODO: NOINCLUDE
+        self.value = ""
         pass
     
     def e_noinclude(self):
-        # TODO: E_NOINCLUDE
+        #TODO: E_NOINCLUDE
+        self.value = ""
         pass
     
     def reflist(self):
@@ -169,12 +173,12 @@ class Parser(object):
     
     def forced_whitespace(self):
         '''Add whitespace.'''
-        self.value = ' \\\\\n'
+        self.value = '\\\\\n'
     
     # POST-HTML TOKENS
     def pspace(self):
         '''Replace {{nop}} with \\.'''
-        self.value = ' \\\\\n'
+        self.value = '\\\\\n'
         
     def cindent(self):
         # TODO: CONTINUE INDENT FROM PREVIOUS PAGE
@@ -254,6 +258,6 @@ class Parser(object):
     def whitespace(self):
         '''Replace newlines with '\\', replace tabs with spaces, leave spaces the same.'''
         if '\r' in self.value or '\n' in self.value:
-            self.value = ' \\\\\n'
+            self.value = '\\\\\n'
         else:
             self.value = ' '
