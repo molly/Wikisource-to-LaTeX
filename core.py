@@ -37,13 +37,13 @@ def setup_logging():
 if __name__ == "__main__":
     logger = setup_logging()
     doc = Document()
-#    doc.organize()
-#    if not os.path.exists(os.curdir + '/raw'):
-#        logger.debug("Getting raw text files.")
-#        doc.call()
-#    if not os.path.exists(os.curdir + '/text'):
-#        logger.debug("Parsing JSON to TXT.")
-#        doc.json_to_text()
+    doc.organize()
+    if not os.path.exists(os.curdir + '/raw'):
+        logger.debug("Getting raw text files.")
+        doc.call()
+    if not os.path.exists(os.curdir + '/text'):
+        logger.debug("Parsing JSON to TXT.")
+        doc.json_to_text()
         
     # Open and read test file
     with codecs.open(os.curdir + '/text/0/0.txt', 'r', 'utf-8') as original:
@@ -53,6 +53,6 @@ if __name__ == "__main__":
     # Begin!
     tokenizer = Tokenizer()
     token_list = tokenizer.analyze(test_data)
-    with codecs.open('testoutput.txt', 'w', 'utf-8') as outputfile:
+    with codecs.open('testoutput.txt', 'r+', 'utf-8') as outputfile:
         parser = Parser(outputfile)
         parser.dispatch(token_list)

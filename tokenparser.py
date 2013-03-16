@@ -37,9 +37,17 @@ class Parser(object):
                     self.logger.debug("No function: {}.".format(e))
                 else:
                     self.write(self.value)
+                    
+    def nested(self, text):
+        '''Deal with tokens that may not have been caught because they were nested within other
+        tokens (e.g., punctuation in {{center}})'''
+        text = text.replace("#", "\#").replace("$", "\$").replace("%", "\%").replace("~", "\~")
+        text = text.replace("_", "\_").replace("^", "\^").replace("|", "\|").replace("&", "\&")
+        return text
                 
     def write(self, text):
         if type(text) is tuple:
+            # Just for now until all the functions are written
             pass
         else:
             self.output.write(text)
@@ -122,7 +130,7 @@ class Parser(object):
     def declassified(self):
         self.value = ("\\begin{spacing}{0.7}\n\\begin{center}\n\\begin{scriptsize}\\textbf" 
         "{Declassified} per Executive Order 13526, Section 3.3\\\\NND Project Number: NND 63316." 
-        "By: NWD Date: 2011\n\\end{scriptsize}\n")
+        "By: NWD Date: 2011\n\\end{scriptsize}\n\\end{center}\n\\end{spacing}\n")
     
     def secret(self):
         #TODO: SECRET
@@ -168,17 +176,43 @@ class Parser(object):
         pass
     
     def e_ref(self):
-        #TODDO: E_REF
+        #TODO: E_REF
         pass
     
     def forced_whitespace(self):
         '''Add whitespace.'''
-        self.value = '\\\\\n'
+        try: 
+            self.output.seek(-1, 1)
+            preceding = self.output.read(1)
+            if preceding != "\n" and preceding != "}":
+                self.value = '\\\\\n'
+            else:
+                self.value = ''
+        except:
+            pass
+    
+    # CENTERED TOKENS
+    def centered(self):
+        '''Begin centered text.'''
+        # TODO: Check that there is a '\\' before and after centered text
+        self.value = "\\begin{center}\n"
+    
+    def e_centered(self):
+        '''End centered text.'''
+        self.value = "\\end{center}\n"
     
     # POST-HTML TOKENS
     def pspace(self):
         '''Replace {{nop}} with \\.'''
-        self.value = '\\\\\n'
+        try: 
+            self.output.seek(-1, 1)
+            preceding = self.output.read(1)
+            if preceding != "\n" and preceding != "}":
+                self.value = '\\\\\n'
+            else:
+                self.value = ''
+        except:
+            pass
         
     def cindent(self):
         # TODO: CONTINUE INDENT FROM PREVIOUS PAGE
@@ -195,11 +229,6 @@ class Parser(object):
     def pent(self):
         # TODO: NOTE
         pass
-    
-    def centered(self):
-        '''Center text.'''
-        # TODO: Check that there is a '\\' before and after centered text
-        self.value = "\\begin{center}" + self.value + "\\end{center}"
         
     def underlined(self):
         '''Replace underlined text with italicized text.'''
@@ -235,15 +264,17 @@ class Parser(object):
     def punct(self):
         # TODO: Figure out `` and " for quotes
         '''Write punctuation to file, escaping any characters with special functions in LaTeX.'''
-        escape = ["#", "$", "%", "&", "~", "_", "^", "\\", "{", "}", "|"]
-        if self.value in escape:
+        escape = ["#", "$", "%", "&", "~", "_", "^", "\\", "{", "}"]
+        if self.value in escape: # Precede the punctuation with a backslash
             self.value = "\\" + self.value
-        elif self.value == "°":
+        elif self.value == "°": # Replace degree symbol
             self.value = "\\degree"
-        elif self.value == "–":
+        elif self.value == "–": # Replace en dash
             self.value = "--"
-        elif self.value == "—":
+        elif self.value == "—": # Replace em dash
             self.value = "---"
+        elif self.value == "\|": # Replace pipe
+            self.value = "\\textbar"
     
     def word(self):
         # TODO: Fix large spaces after abbreviations (i.e., e.g., etc.)
@@ -256,8 +287,16 @@ class Parser(object):
         pass
         
     def whitespace(self):
-        '''Replace newlines with '\\', replace tabs with spaces, leave spaces the same.'''
+        '''Replace newlines with '\\', replace tabs with spaces, leave spaces the same.''' 
         if '\r' in self.value or '\n' in self.value:
-            self.value = '\\\\\n'
+            try: 
+                self.output.seek(-1, 1)
+                preceding = self.output.read(1)
+                if preceding != "\n" and preceding != "}":
+                    self.value = '\\\\\n'
+                else:
+                    self.value = ''
+            except:
+                pass
         else:
             self.value = ' '

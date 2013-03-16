@@ -66,13 +66,15 @@ class Tokenizer(object):
               'E_REF', # </ref>
               'FORCED_WHITESPACE', # <br />
               'EXTRANEOUS_HTML', # <div>, <p>, etc.
+              # Centered state
+              'CENTERED', # {{center|...}} or {{c|...}}
+              'E_CENTERED', # End of centered state
               # General tokens (INITIAL state)
               'PSPACE', # {{nop}}
               'CINDENT', # Continued indent from prev page <noinclude>:</noinclude>
               'INDENT', # Line preceded by one or more :'s
               'PAGENUM', # Taken from running header
               'PENT', # {{Pent|I. A.|1}}
-              'CENTERED', # {{center|...}} or {{c|...}}
               'UNDERLINED', # {{u|...}}
               'BOLDED', # '''...'''
               'ITALICIZED', # ''...''
@@ -92,7 +94,8 @@ class Tokenizer(object):
     states = (
               ('table', 'inclusive'),
               ('wikitable', 'inclusive'),
-              ('html', 'exclusive')
+              ('html', 'exclusive'),
+              ('centered', 'inclusive')
               )
 
 #===================================================================================================
@@ -245,6 +248,17 @@ class Tokenizer(object):
         r'/?(?:div|p|span)(?:(?:\s.*?)(?=>))?'
         pass # Ignore
     
+    # CENTERED STATE
+    def t_CENTERED(self, token):
+        r'[{]{2}c(?:enter)?\|'
+        token.lexer.begin('centered')
+        return token
+    
+    def t_centered_E_CENTERED(self, token):
+        r'[}]{2}'
+        token.lexer.begin('INITIAL')
+        return token
+    
     # INITIAL STATE
     def t_PSPACE(self, token):
         r'[{]{2}nop[}]{2}'
@@ -267,11 +281,6 @@ class Tokenizer(object):
     def t_PENT(self, token):
         r'[{]{2}Pent\|(?P<sect>.*?)\|(?P<subsect>(\d\.\d)\|)?(?P<num>\d+)[}]{2}'
         token.value = token.lexer.lexmatch.group('sect', 'subsect', 'num')
-        return token
-    
-    def t_CENTERED(self, token):
-        r'[{]{2}c(?:enter)?\|(?P<text>.*?(?:[}]{2})?)[}]{2}'
-        token.value = token.lexer.lexmatch.group('text')
         return token
     
     def t_UNDERLINED(self, token):
@@ -348,4 +357,5 @@ class Tokenizer(object):
                 break      # No more input
             l_token = [token.type, token.value]
             self.token_list.append(l_token)
+            print(token)
         return self.token_list
