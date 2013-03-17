@@ -53,6 +53,8 @@ if __name__ == "__main__":
     # Begin!
     tokenizer = Tokenizer()
     token_list = tokenizer.analyze(test_data)
-    with codecs.open('testoutput.txt', 'r+', 'utf-8') as outputfile:
+    if not os.path.exists(os.curdir + '/latex'):
+        os.mkdir(os.curdir + '/latex')
+    with codecs.open(os.curdir + '/latex/testoutput.txt', 'w+', 'utf-8') as outputfile:
         parser = Parser(outputfile)
         parser.dispatch(token_list)

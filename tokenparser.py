@@ -123,9 +123,10 @@ class Parser(object):
         pass
     
     def pagequality(self):
-        #TODO: PAGEQUALITY
-        self.value = ""
-        pass
+        if self.output.tell() != 0:
+            self.value = "\n\\newpage\n"
+        else:
+            self.value = ""
     
     def declassified(self):
         self.value = ("\\begin{spacing}{0.7}\n\\begin{center}\n\\begin{scriptsize}\\textbf" 
@@ -199,7 +200,12 @@ class Parser(object):
     
     def e_centered(self):
         '''End centered text.'''
-        self.value = "\\end{center}\n"
+        self.output.seek(-1, 1)
+        preceding = self.output.read(1)
+        if preceding == "\n":
+            self.value = "\\end{center}\n"
+        else:
+            self.value = "\n\\end{center}\n"
     
     # POST-HTML TOKENS
     def pspace(self):
@@ -229,6 +235,13 @@ class Parser(object):
     def pent(self):
         # TODO: NOTE
         pass
+        
+    def size(self):
+        '''Adjust the size of the text.'''
+        self.value = ("\\begin{" + self.value[0] + "}\n" + self.nested(self.value[1]) +
+                      " \\\\\n\\end{" + self.value[0] + "}\n")
+        pass
+        
         
     def underlined(self):
         '''Replace underlined text with italicized text.'''

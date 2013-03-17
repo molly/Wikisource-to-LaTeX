@@ -52,6 +52,7 @@ class Tokenizer(object):
               'DECLASSIFIED', # Declassified per Executive Order... Date: 2011
               'SECRET', # TOP SECRET - Sensitive
               'RUNHEAD', # Running header
+              'FORCED_WHITESPACE', # <br />; checked before HTML state b/c it's often nested
             # HTML state
               'HTML', # Beginning of HTML tag
               'E_HTML', # Ending of HTML tag
@@ -64,7 +65,6 @@ class Tokenizer(object):
               'REFLIST', # <references/>
               'REF', # <ref>
               'E_REF', # </ref>
-              'FORCED_WHITESPACE', # <br />
               'EXTRANEOUS_HTML', # <div>, <p>, etc.
               # Centered state
               'CENTERED', # {{center|...}} or {{c|...}}
@@ -75,6 +75,7 @@ class Tokenizer(object):
               'INDENT', # Line preceded by one or more :'s
               'PAGENUM', # Taken from running header
               'PENT', # {{Pent|I. A.|1}}
+              'SIZE', # Size templates, such as {{x-larger}}
               'UNDERLINED', # {{u|...}}
               'BOLDED', # '''...'''
               'ITALICIZED', # ''...''
@@ -191,6 +192,10 @@ class Tokenizer(object):
         r'[{]{2}rh(?:\|left=\s?(?P<left>.*?)\s?)?(?:\|center=\s?(?P<center>.*?)\s?)?(?:\|right=\s?(?P<right>.*?)\s?)?[}]{2}(?!\})'
         token.value = token.lexer.lexmatch.group('left','center','right')
         return token
+    
+    def t_FORCED_WHITESPACE(self, token):
+        r'<br\s?/?>'
+        return token
      
     # HTML STATE
     def t_HTML(self, token):
@@ -240,10 +245,6 @@ class Tokenizer(object):
         r'/ref'
         return token
     
-    def t_html_FORCED_WHITESPACE(self, token):
-        r'br\s?/?'
-        return token
-    
     def t_html_EXTRANEOUS_HTML(self, token):
         r'/?(?:div|p|span)(?:(?:\s.*?)(?=>))?'
         pass # Ignore
@@ -283,6 +284,32 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('sect', 'subsect', 'num')
         return token
     
+    def t_SIZE(self, token):
+        r'[{]{2}(?:(?P<x>[x]{1,4})\-)?(?P<ls>larger|smaller)\|(?P<text>.*?)[}]{2}'
+        x = token.lexer.lexmatch.group('x')
+        ls = token.lexer.lexmatch.group('ls')
+        if ls == 'smaller':
+            if x == 'xx':
+                token.value = 'scriptsize',
+            elif x == 'x':
+                token.value = 'footnotesize',
+            else:
+                token.value = 'small',
+        elif ls == 'larger':
+            if x == 'x':
+                token.value = 'Large',
+            elif x == 'xx':
+                token.value = 'LARGE',
+            elif x == 'xxx':
+                token.value = 'huge',
+            elif x == 'xxxx':
+                token.value = 'Huge',
+            else:
+                token.value = 'large',
+        text = token.lexer.lexmatch.group('text'),
+        token.value = token.value + text
+        return token
+        
     def t_UNDERLINED(self, token):
         r'(?:[{]{2}u\||<u>)(?P<word>.*?)(?:[}]{2}|</u>)'
         token.value = token.lexer.lexmatch.group('word')
