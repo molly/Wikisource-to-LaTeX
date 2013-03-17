@@ -39,15 +39,6 @@ nosetests.xml
 *.pkl
 raw
 text
+latex
+design
 lextab.py
-*.txt
-
-Design/1.log
-
-Design/ppdesign.aux
-
-Design/ppdesign.log
-
-Design/ppdesign.pdf
-
-Design/ppdesign.synctex.gz
