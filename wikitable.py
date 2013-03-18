@@ -28,11 +28,20 @@ class Wikitable(object):
         self.table_text = '' # Full table text to be appended to output file
         
         self.begin_table = '\\begin{tabularx}' # First line of table (\begin{tabularx}...)
+    
+    def add_cell(self, cell):
+        self.row_entries.append(cell)
         
     def end(self):
         '''Finish up the table.'''
         self.table_text = self.begin_table + "\\\\\n\\end{tabularx}"
         print(self.table_text)
+        print(self.rows)
+        
+    def new_row(self):
+        if len(self.row_entries) > 0:
+            self.rows.append(self.row_entries)
+            self.row_entries = []
         
     def set_width(self, w):
         if w == '100':

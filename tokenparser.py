@@ -126,17 +126,64 @@ class Parser(object):
         self.value = ''
                 
     def newrow(self):
-        pass        
+        self.wt.new_row()
+        self.value = ''  
         
     def tcell(self):
-        pass
+        self.cell = ''
+        self.value = ''
         
     def boxedcell(self):
 #        self.value = "\\fbox{" + self.value + "} & "
         pass
     
     def e_tcell(self):
-        pass
+        self.wt.add_cell(self.cell)
+        del self.cell
+        self.value = ''
+        
+    def wt_ellipses(self):
+        '''Convert to proper ellipsis formatting.'''
+        if self.value == "...":
+            self.value = "\\ldots"
+        else:
+            self.value = "\\ldots."
+        self.cell += self.value
+        self.value = ''
+    
+    def wt_punct(self):
+        # TODO: Figure out `` and " for quotes
+        '''Write punctuation to file, escaping any characters with special functions in LaTeX.'''
+        escape = ["#", "$", "%", "&", "_", "\\", "{", "}"]
+        if self.value in escape: # Precede the punctuation with a backslash
+            self.value = "\\" + self.value
+        elif self.value == "°": # Replace degree symbol
+            self.value = "\\degree"
+        elif self.value == "–": # Replace en dash
+            self.value = "--"
+        elif self.value == "—": # Replace em dash
+            self.value = "---"
+        elif self.value == "\|": # Replace pipe
+            self.value = "\\textbar"
+        self.cell += self.value
+        self.value = ''
+    
+    def wt_word(self):
+        # TODO: Fix large spaces after abbreviations (i.e., e.g., etc.)
+        '''Write word to file, using compose codes for any accented characters.'''
+        if "é" in self.value:
+            self.value = self.value.replace("é", "\\'{e}")
+        self.cell += self.value
+        self.value = ''
+        
+    def wt_number(self):
+        '''Write number(s) to file without changing anything.'''
+        self.cell += self.value
+        self.value = ''
+        
+    def wt_whitespace(self):
+        self.cell += ' '
+        self.value = ''
 
     # PRE-HTML TOKENS
     def internallink(self):

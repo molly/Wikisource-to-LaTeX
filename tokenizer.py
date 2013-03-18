@@ -51,6 +51,11 @@ class Tokenizer(object):
               'TCELL', # Beginning of table cell
               'BOXEDCELL', # For individually boxed cells
               'E_TCELL', # End of table cell
+              'WT_ELLIPSES', # ... or ....
+              'WT_PUNCT',
+              'WT_WORD',
+              'WT_NUMBER',
+              'WT_WHITESPACE',
             # Tokens to check before HTML state  
               'INTERNALLINK',
               'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
@@ -198,6 +203,26 @@ class Tokenizer(object):
     def t_tcell_E_TCELL(self, token):
         r'\s?(?=\s?\||\n)'
         token.lexer.begin('wikitable')
+        return token
+    
+    def t_tcell_WT_ELLIPSES(self, token):
+        r'[.]{3,4}'
+        return token
+    
+    def t_tcell_WT_PUNCT(self, token):
+        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~°–—]"""
+        return token
+    
+    def t_tcell_WT_WORD(self, token):
+        r'[a-zA-Zé]+'
+        return token
+    
+    def t_tcell_WT_NUMBER(self, token):
+        r'[0-9]+'
+        return token
+    
+    def t_tcell_WT_WHITESPACE(self, token):
+        r'[\s\t\r\n]+'
         return token
     
     # Tokens to be checked before HTML state
