@@ -28,13 +28,21 @@ class Wikitable(object):
         self.table_text = '' # Full table text to be appended to output file
         
         self.begin_table = '\\begin{tabularx}' # First line of table (\begin{tabularx}...)
+        self.cell = '' # Current cell
     
-    def add_cell(self, cell):
-        self.row_entries.append(cell)
+    def add_cell(self):
+        self.row_entries.append(self.cell)
+        self.cell = ''
+        
+    def cell_append(self, text):
+        self.cell += text
+        print(self.cell)
         
     def end(self):
         '''Finish up the table.'''
         self.table_text = self.begin_table + "\\\\\n\\end{tabularx}"
+        if len(self.row_entries) > 0:
+            self.rows.append(self.row_entries) # Append last row if it hasn't happened yet
         print(self.table_text)
         print(self.rows)
         

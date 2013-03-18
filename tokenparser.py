@@ -130,16 +130,14 @@ class Parser(object):
         self.value = ''  
         
     def tcell(self):
-        self.cell = ''
         self.value = ''
         
     def boxedcell(self):
-#        self.value = "\\fbox{" + self.value + "} & "
+        self.wt.cell_append("\\fbox{" + self.value + "}")
         pass
     
     def e_tcell(self):
-        self.wt.add_cell(self.cell)
-        del self.cell
+        self.wt.add_cell()
         self.value = ''
         
     def wt_ellipses(self):
@@ -148,7 +146,7 @@ class Parser(object):
             self.value = "\\ldots"
         else:
             self.value = "\\ldots."
-        self.cell += self.value
+        self.wt.cell_append(self.value)
         self.value = ''
     
     def wt_punct(self):
@@ -165,7 +163,7 @@ class Parser(object):
             self.value = "---"
         elif self.value == "\|": # Replace pipe
             self.value = "\\textbar"
-        self.cell += self.value
+        self.wt.cell_append(self.value)
         self.value = ''
     
     def wt_word(self):
@@ -173,16 +171,16 @@ class Parser(object):
         '''Write word to file, using compose codes for any accented characters.'''
         if "é" in self.value:
             self.value = self.value.replace("é", "\\'{e}")
-        self.cell += self.value
+        self.wt.cell_append(self.value)
         self.value = ''
         
     def wt_number(self):
         '''Write number(s) to file without changing anything.'''
-        self.cell += self.value
+        self.wt.cell_append(self.value)
         self.value = ''
         
     def wt_whitespace(self):
-        self.cell += ' '
+        self.wt.cell_append(self.value)
         self.value = ''
 
     # PRE-HTML TOKENS

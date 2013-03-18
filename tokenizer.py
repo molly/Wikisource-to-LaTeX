@@ -203,6 +203,7 @@ class Tokenizer(object):
     def t_tcell_E_TCELL(self, token):
         r'\s?(?=\s?\||\n)'
         token.lexer.begin('wikitable')
+        token.value = ' '
         return token
     
     def t_tcell_WT_ELLIPSES(self, token):
