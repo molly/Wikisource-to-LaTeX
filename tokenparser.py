@@ -25,6 +25,8 @@ class Parser(object):
     def __init__(self, outputfile):
         self.logger = logging.getLogger("W2L")
         self.output = outputfile
+        self.tell = None
+        self.columntell = None
         
     def dispatch(self, t_list):
         for token in t_list:
@@ -110,13 +112,79 @@ class Parser(object):
     
     # WIKITABLE FUNCTIONS
     def wikitable(self):
-        #TODO: WIKITABLE
-        pass
+        self.value = "\\begin{tabularx}\n"
+        self.write(self.value)
+        self.columntell = self.output.tell()
+        self.value = ''
     
     def e_wikitable(self):
-        #TODO: E_WIKITABLE
-        pass
+        try: 
+            self.output.seek(-5, 1)
+            preceding = self.output.read(5)
+            print(preceding)
+            #if preceding == '& ':
+            self.output.seek(-5, 1)
+            self.value = "asd\\\\\n\\end{tabularx}"
+        except:
+            pass
+        self.get_numcol()
     
+    def format(self):
+        self.output.seek(-1,1)
+        if self.value[0]:
+            if self.value[0] == '100':
+                self.value = "{\\textwidth}"
+                self.write(self.value)
+            else:
+                self.value = "{." + self.value[0] + "\\textwidth}"
+                self.write(self.value)
+            self.value = ''
+            self.columntell = self.output.tell()
+                
+    def newrow(self):
+        try: 
+            self.output.seek(-2, 1)
+            preceding = self.output.read(2)
+            if preceding == '& ':
+                self.output.seek(-2, 1)
+                self.value = "\\\\\n"
+            if preceding[1] == '}':
+                self.value = '\n'
+            else:
+                self.value = "\\\\\n"
+        except:
+            pass            
+        
+    def tcell(self):
+        self.value = ""
+        if self.tell is None:
+            self.tell = self.output.tell()
+        
+    def boxedcell(self):
+        self.value = "\\fbox{" + self.value + "} & "
+    
+    def e_tcell(self):
+        self.value = " & "
+        
+    def get_numcol(self):
+        pos = self.output.tell()
+        self.output.seek(self.tell)
+        line = self.output.readline()
+        while '\\\\' not in line:
+            line += self.output.readline()
+        line.replace('\n','').replace('\r', '')
+        self.tell = None
+        self.output.seek(self.columntell)
+        columns = '{ '
+        for i in range(line.count('&') + 1):
+            columns += '>{\\centering\\arraybackslash}X '
+        columns += '}'
+        table = self.output.read()
+        self.output.seek(self.columntell)
+        self.output.write(columns)
+        self.output.write(table)
+        
+        
     # PRE-HTML TOKENS
     def internallink(self):
         #TODO: INTERNAL LINK
@@ -242,7 +310,6 @@ class Parser(object):
                       " \\\\\n\\end{" + self.value[0] + "}\n")
         pass
         
-        
     def underlined(self):
         '''Replace underlined text with italicized text.'''
         self.italicized()
@@ -277,7 +344,7 @@ class Parser(object):
     def punct(self):
         # TODO: Figure out `` and " for quotes
         '''Write punctuation to file, escaping any characters with special functions in LaTeX.'''
-        escape = ["#", "$", "%", "&", "~", "_", "^", "\\", "{", "}"]
+        escape = ["#", "$", "%", "&", "_", "\\", "{", "}"]
         if self.value in escape: # Precede the punctuation with a backslash
             self.value = "\\" + self.value
         elif self.value == "°": # Replace degree symbol

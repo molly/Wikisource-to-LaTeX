@@ -46,6 +46,11 @@ class Tokenizer(object):
             # Wikitable state
               'WIKITABLE', # Beginning of table {|
               'E_WIKITABLE', # End of table |}
+              'FORMAT', # Initial {| style="..."
+              'NEWROW', # |-
+              'TCELL', # Beginning of table cell
+              'BOXEDCELL', # For individually boxed cells
+              'E_TCELL', # End of table cell
             # Tokens to check before HTML state  
               'INTERNALLINK',
               'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
@@ -95,6 +100,7 @@ class Tokenizer(object):
     states = (
               ('table', 'inclusive'),
               ('wikitable', 'inclusive'),
+              ('tcell', 'inclusive'),
               ('html', 'exclusive'),
               ('centered', 'inclusive')
               )
@@ -159,7 +165,7 @@ class Tokenizer(object):
     
     
     # Wikitable state
-    def t_wikitable_WIKITABLE(self, token):
+    def t_WIKITABLE(self, token):
         r'\{\|'
         token.lexer.begin('wikitable')
         return token
@@ -167,6 +173,31 @@ class Tokenizer(object):
     def t_wikitable_E_WIKITABLE(self, token):
         r'\|\}'
         token.lexer.begin('INITIAL')
+        return token
+    
+    def t_wikitable_FORMAT(self, token):
+        # TODO: This regex will need to become much more complex as more instances are found
+        r'(?:\s?style\=")(?:\s?width\:\s?(?P<width>\d{1,3})%;?\s?)?(?:text\-align\:\s?(?P<textalign>center);?\s?)(?:")'
+        token.value = (token.lexer.lexmatch.group('width', 'textalign'))
+        return token
+    
+    def t_wikitable_NEWROW(self, token):
+        r'(\n?\|\-\s?\n)'
+        return token
+    
+    def t_wikitable_TCELL(self, token):
+        r'\|{1,2}\s?'
+        token.lexer.begin('tcell')
+        return token
+    
+    def t_tcell_BOXEDCELL(self, token):
+        r'(?:style="border:\s1px\ssolid;"\s?\|\s?)(?:\{{2}popup\snote\|(?:.*?)\|)?(?P<text>.*?)(?:\}{2})?\s?(?=\s?\||\n)'
+        token.value = token.lexer.lexmatch.group('text')
+        return token
+    
+    def t_tcell_E_TCELL(self, token):
+        r'\s?(?=\s?\||\n)'
+        token.lexer.begin('wikitable')
         return token
     
     # Tokens to be checked before HTML state
