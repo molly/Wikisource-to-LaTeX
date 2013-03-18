@@ -117,8 +117,7 @@ class Parser(object):
         self.value = ''
     
     def e_wikitable(self):
-        self.wt.end()
-        self.value = ''
+        self.value = self.wt.end()
     
     def format(self):
         if self.value[0]:
@@ -134,7 +133,7 @@ class Parser(object):
         
     def boxedcell(self):
         self.wt.cell_append("\\fbox{" + self.value + "}")
-        pass
+        self.value = ''
     
     def e_tcell(self):
         self.wt.add_cell()
@@ -180,7 +179,10 @@ class Parser(object):
         self.value = ''
         
     def wt_whitespace(self):
-        self.wt.cell_append(self.value)
+        if self.value == '&nbsp;':
+            self.wt.cell_append('')
+        else:
+            self.wt.cell_append(' ')
         self.value = ''
 
     # PRE-HTML TOKENS

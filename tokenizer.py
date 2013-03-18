@@ -206,6 +206,10 @@ class Tokenizer(object):
         token.value = ' '
         return token
     
+    def t_tcell_WT_WHITESPACE(self, token):
+        r'(?:\s|\t|\r|\n|\&nbsp;)'
+        return token
+    
     def t_tcell_WT_ELLIPSES(self, token):
         r'[.]{3,4}'
         return token
@@ -220,10 +224,6 @@ class Tokenizer(object):
     
     def t_tcell_WT_NUMBER(self, token):
         r'[0-9]+'
-        return token
-    
-    def t_tcell_WT_WHITESPACE(self, token):
-        r'[\s\t\r\n]+'
         return token
     
     # Tokens to be checked before HTML state

@@ -28,6 +28,7 @@ class Wikitable(object):
         self.table_text = '' # Full table text to be appended to output file
         
         self.begin_table = '\\begin{tabularx}' # First line of table (\begin{tabularx}...)
+        self.table_body = '' # Body text
         self.cell = '' # Current cell
     
     def add_cell(self):
@@ -36,15 +37,31 @@ class Wikitable(object):
         
     def cell_append(self, text):
         self.cell += text
-        print(self.cell)
         
     def end(self):
         '''Finish up the table.'''
-        self.table_text = self.begin_table + "\\\\\n\\end{tabularx}"
         if len(self.row_entries) > 0:
             self.rows.append(self.row_entries) # Append last row if it hasn't happened yet
-        print(self.table_text)
-        print(self.rows)
+        self.format_body()
+        self.table_text = (self.begin_table + self.table_body + "\\end{tabularx}")
+        return self.table_text
+        
+    def format_body(self):
+        self.table_body = '\n'
+        num_cols = self.get_num_cols()
+        for row in self.rows:
+            while len(row) < num_cols:
+                row.append(' ')
+            self.table_body += (' & '.join(row) + ' \\\\\n')
+        self.begin_table += "{" + ' '.join(['X']*num_cols) + "}"
+        
+    def get_num_cols(self):
+        '''Count the number of columns in the table.'''
+        numcols = 0
+        for row in self.rows:
+            if len(row) > numcols:
+                numcols = len(row)
+        return numcols
         
     def new_row(self):
         if len(self.row_entries) > 0:
@@ -54,6 +71,8 @@ class Wikitable(object):
     def set_width(self, w):
         if w == '100':
             width = "{\\textwidth}"
+        elif int(w) < 70:
+            width = "{.70\\textwidth}" # Forcing mininum table width of 70%
         else:
             width = "{." + w + "\\textwidth}"
         self.begin_table += width
