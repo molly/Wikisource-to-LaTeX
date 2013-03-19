@@ -30,10 +30,15 @@ class Wikitable(object):
         self.begin_table = '\\begin{tabularx}' # First line of table (\begin{tabularx}...)
         self.table_body = '' # Body text
         self.cell = '' # Current cell
+        self.cellb = '' # Prepend to cell
+        self.celle = '' # Append to cell
     
     def add_cell(self):
+        self.cell = self.cellb + self.cell + self.celle
         self.row_entries.append(self.cell)
         self.cell = ''
+        self.cellb = ''
+        self.celle = ''
         
     def cell_append(self, text):
         self.cell += text
@@ -43,7 +48,7 @@ class Wikitable(object):
         if len(self.row_entries) > 0:
             self.rows.append(self.row_entries) # Append last row if it hasn't happened yet
         self.format_body()
-        self.table_text = (self.begin_table + self.table_body + "\\end{tabularx}")
+        self.table_text = (self.begin_table + self.table_body + "\\end{tabularx} \\\\\n")
         return self.table_text
         
     def format_body(self):
@@ -63,7 +68,12 @@ class Wikitable(object):
                 numcols = len(row)
         return numcols
         
+    def larger(self):
+        self.cellb="\\large{"
+        self.celle="}"
+    
     def new_row(self):
+        print(self.row_entries)
         if len(self.row_entries) > 0:
             self.rows.append(self.row_entries)
             self.row_entries = []
@@ -76,4 +86,7 @@ class Wikitable(object):
         else:
             width = "{." + w + "\\textwidth}"
         self.begin_table += width
+        
+    def strikeout(self):
+        self.cellb = "\\begin{ulem}"
             

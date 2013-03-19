@@ -21,7 +21,7 @@
 
 __all__ = ['Tokenizer']
 
-import codecs, logging, re
+import codecs, logging, re, os
 import lex
 
 class Tokenizer(object):
@@ -51,7 +51,14 @@ class Tokenizer(object):
               'TCELL', # Beginning of table cell
               'BOXEDCELL', # For individually boxed cells
               'E_TCELL', # End of table cell
+              'WT_LARGER', # Larger
+              'WT_POPUP', # Popup note
+              'WT_STRIKEOUT',
+              'WT_E_STRIKEOUT',
+              'WT_E_TEMPLATE', # So it doesn't get hung up on the end of the larger template
               'WT_ELLIPSES', # ... or ....
+              'WT_CHECKBOX_EMPTY',
+              'WT_CHECKBOX_CHECKED',
               'WT_PUNCT',
               'WT_WORD',
               'WT_NUMBER',
@@ -90,6 +97,7 @@ class Tokenizer(object):
               'BOLDED', # '''...'''
               'ITALICIZED', # ''...''
               'WLINK', # For links to Wikipedia, Wiktionary, etc.
+              'RULE', # For horizontal rules
               # Very basic tokens
               'ELLIPSES', # ... or ....
               'CHECKBOX_EMPTY',
@@ -182,7 +190,7 @@ class Tokenizer(object):
     
     def t_wikitable_FORMAT(self, token):
         # TODO: This regex will need to become much more complex as more instances are found
-        r'(?:\s?style\=")(?:\s?width\:\s?(?P<width>\d{1,3})%;?\s?)?(?:text\-align\:\s?(?P<textalign>center);?\s?)(?:")'
+        r'(?:\s?style\=")(?:\s?width\:\s?(?P<width>\d{1,3})%;?\s?)?(?:text\-align\:\s?(?P<textalign>center);?\s?)?(?:")'
         token.value = (token.lexer.lexmatch.group('width', 'textalign'))
         return token
     
@@ -210,8 +218,36 @@ class Tokenizer(object):
         r'(?:\s|\t|\r|\n|\&nbsp;)'
         return token
     
+    def t_tcell_WT_LARGER(self, token):
+        r'[{]{2}larger\|'
+        return token
+    
+    def t_tcell_WT_POPUP(self, token):
+        r'[{]{2}popup\snote\|(.*?)\|'
+        pass
+    
+    def t_tcell_WT_STRIKEOUT(self, token):
+        r'<s>'
+        return token
+    
+    def t_tcell_WT_E_STRIKEOUT(self, token):
+        r'</s>'
+        return token
+    
+    def t_tcell_WT_E_TEMPLATE(self, token):
+        r'[}]{2}'
+        pass
+    
     def t_tcell_WT_ELLIPSES(self, token):
         r'[.]{3,4}'
+        return token
+    
+    def t_tcell_WT_CHECKBOX_EMPTY(self, token):
+        r'□'
+        return token
+    
+    def t_tcell_WT_CHECKBOX_CHECKED(self,token):
+        r'▣'
         return token
     
     def t_tcell_WT_PUNCT(self, token):
@@ -387,6 +423,11 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('link')
         return token
     
+    def t_RULE(self, token):
+        r'[{]{2}rule(?:\|height=(?P<height>\d{1,3})px)[}]{2}'
+        token.value = token.lexer.lexmatch.group('height')
+        return token
+    
     # VERY basic matches that have to be checked last.
     def t_ELLIPSES(self, token):
         r'[.]{3,4}'
@@ -435,11 +476,13 @@ class Tokenizer(object):
         '''Read through the text file and tokenize.'''
         self.lexer.input(data)
         self.token_list = list()
-        while True:
-            token = self.lexer.token()
-            if not token:
-                break      # No more input
-            l_token = [token.type, token.value]
-            self.token_list.append(l_token)
-            print(token)
+        with codecs.open(os.curdir + '/test.txt', 'w+', 'utf-8') as tokenfile:
+            while True:
+                token = self.lexer.token()
+                if not token:
+                    break      # No more input
+                l_token = [token.type, token.value]
+                self.token_list.append(l_token)
+                print(token)
+                tokenfile.write(str(token) + '\n')
         return self.token_list

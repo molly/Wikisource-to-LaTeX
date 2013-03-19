@@ -118,6 +118,7 @@ class Parser(object):
     
     def e_wikitable(self):
         self.value = self.wt.end()
+        del self.wt
     
     def format(self):
         if self.value[0]:
@@ -139,6 +140,18 @@ class Parser(object):
         self.wt.add_cell()
         self.value = ''
         
+    def wt_larger(self):
+        self.wt.larger()
+        self.value = ''
+        
+    def wt_strikeout(self):
+        self.wt.cell_append("\\sout{")
+        self.value = ''
+        
+    def wt_e_strikeout(self):
+        self.wt.cell_append("}")
+        self.value = ''
+        
     def wt_ellipses(self):
         '''Convert to proper ellipsis formatting.'''
         if self.value == "...":
@@ -146,6 +159,14 @@ class Parser(object):
         else:
             self.value = "\\ldots."
         self.wt.cell_append(self.value)
+        self.value = ''
+        
+    def wt_checkbox_empty(self):
+        self.wt.cell_append("\\Square~")
+        self.value = ''
+    
+    def wt_checkbox_checked(self):
+        self.wt.cell_append("\\CheckedBox~")
         self.value = ''
     
     def wt_punct(self):
@@ -326,6 +347,10 @@ class Parser(object):
         '''Print only the display text of the wikilink.'''
         pass
     
+    def rule(self):
+        '''Horizontal rule.'''
+        self.value = "\n\\rule{\\textwidth}{2px} \\\\\n\n"
+    
     # BASIC TOKENS
     def ellipses(self):
         '''Convert to proper ellipsis formatting.'''
@@ -333,12 +358,12 @@ class Parser(object):
             self.value = "\\ldots"
         else:
             self.value = "\\ldots."
+            
     def checkbox_empty(self):
-        #TODO: CHECKBOX_EMPTY
-        pass
+        self.value = "\\Square~"
     
     def checkbox_checked(self):
-        #TODO: CHECKBOX_FULL
+        self.value = "\\CheckedBox~"
         pass
     
     def punct(self):
