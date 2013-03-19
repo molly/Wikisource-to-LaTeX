@@ -32,6 +32,7 @@ class Wikitable(object):
         self.cell = '' # Current cell
         self.cellb = '' # Prepend to cell
         self.celle = '' # Append to cell
+        self.align = ''
     
     def add_cell(self):
         self.cell = self.cellb + self.cell + self.celle
@@ -54,11 +55,18 @@ class Wikitable(object):
     def format_body(self):
         self.table_body = '\n'
         num_cols = self.get_num_cols()
-        for row in self.rows:
-            while len(row) < num_cols:
-                row.append(' ')
-            self.table_body += (' & '.join(row) + ' \\\\\n')
-        self.begin_table += "{" + ' '.join(['X']*num_cols) + "}"
+        if self.align == 'center':
+            for row in self.rows:
+                while len(row) < num_cols:
+                    row.append(' ')
+                self.table_body += (' & '.join(row) + ' \\\\\n')
+            self.begin_table += "{" + ' '.join(['>{\\centering\\arraybackslash}X']*num_cols) + "}"
+        else:
+            for row in self.rows:
+                while len(row) < num_cols:
+                    row.append(' ')
+                self.table_body += (' & '.join(row) + ' \\\\\n')
+            self.begin_table += "{" + ' '.join(['X']*num_cols) + "}"
         
     def get_num_cols(self):
         '''Count the number of columns in the table.'''
@@ -73,7 +81,6 @@ class Wikitable(object):
         self.celle="}"
     
     def new_row(self):
-        print(self.row_entries)
         if len(self.row_entries) > 0:
             self.rows.append(self.row_entries)
             self.row_entries = []

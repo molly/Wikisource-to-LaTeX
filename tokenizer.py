@@ -83,15 +83,18 @@ class Tokenizer(object):
               'REF', # <ref>
               'E_REF', # </ref>
               'EXTRANEOUS_HTML', # <div>, <p>, etc.
-              # Centered state
+              # Aligned state
               'CENTERED', # {{center|...}} or {{c|...}}
               'E_CENTERED', # End of centered state
+              'RIGHT',
+              'E_RIGHT',
               # General tokens (INITIAL state)
               'PSPACE', # {{nop}}
               'CINDENT', # Continued indent from prev page <noinclude>:</noinclude>
               'INDENT', # Line preceded by one or more :'s
               'PAGENUM', # Taken from running header
               'PENT', # {{Pent|I. A.|1}}
+              'POPUP', # {{popup note|...|...}}
               'SIZE', # Size templates, such as {{x-larger}}
               'UNDERLINED', # {{u|...}}
               'BOLDED', # '''...'''
@@ -115,7 +118,8 @@ class Tokenizer(object):
               ('wikitable', 'inclusive'),
               ('tcell', 'inclusive'),
               ('html', 'exclusive'),
-              ('centered', 'inclusive')
+              ('centered', 'inclusive'),
+              ('right', 'inclusive')
               )
 
 #===================================================================================================
@@ -342,13 +346,23 @@ class Tokenizer(object):
         r'/?(?:div|p|span)(?:(?:\s.*?)(?=>))?'
         pass # Ignore
     
-    # CENTERED STATE
+    # ALIGNED STATE
     def t_CENTERED(self, token):
         r'[{]{2}c(?:enter)?\|'
         token.lexer.begin('centered')
         return token
     
     def t_centered_E_CENTERED(self, token):
+        r'[}]{2}'
+        token.lexer.begin('INITIAL')
+        return token
+    
+    def t_RIGHT(self, token):
+        r'[{]{2}right\|'
+        token.lexer.begin('right')
+        return token
+    
+    def t_right_E_RIGHT(self, token):
         r'[}]{2}'
         token.lexer.begin('INITIAL')
         return token
@@ -375,6 +389,11 @@ class Tokenizer(object):
     def t_PENT(self, token):
         r'[{]{2}Pent\|(?P<sect>.*?)\|(?P<subsect>(\d\.\d)\|)?(?P<num>\d+)[}]{2}'
         token.value = token.lexer.lexmatch.group('sect', 'subsect', 'num')
+        return token
+    
+    def t_POPUP(self, token):
+        r'[{]{2}popup\snote\|(.*?)\|(?P<text>.*?)[}]{2}'
+        token.value = token.lexer.lexmatch.group('text')
         return token
     
     def t_SIZE(self, token):

@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging
+import logging, re
 from wikitable import Wikitable
 
 class Parser(object):
@@ -44,6 +44,9 @@ class Parser(object):
     def nested(self, text):
         '''Deal with tokens that may not have been caught because they were nested within other
         tokens (e.g., punctuation in {{center}})'''
+        m = re.search('[{]{2}popup\snote\|(.*?)\|', text)
+        if m:
+            text = text[:m.start()] + text[m.end():]
         text = text.replace("#", "\#").replace("$", "\$").replace("%", "\%").replace("~", "\~")
         text = text.replace("_", "\_").replace("^", "\^").replace("|", "\|").replace("&", "\&")
         return text
@@ -123,6 +126,8 @@ class Parser(object):
     def format(self):
         if self.value[0]:
             self.wt.set_width(self.value[0])
+        if self.value[1]:
+            self.wt.align = self.value[1]
         self.value = ''
                 
     def newrow(self):
@@ -295,6 +300,21 @@ class Parser(object):
             self.value = "\\end{center}\n"
         else:
             self.value = "\n\\end{center}\n"
+          
+    def right(self):
+        '''Begin right-aligned text.'''
+        # TODO: Check that there is a '\\' before and after centered text
+        self.value = "\\begin{flushright}\n"
+    
+    def e_right(self):
+        '''End centered text.'''
+        self.output.seek(-1, 1)
+        preceding = self.output.read(1)
+        if preceding == "\n":
+            self.value = "\\end{flushright}\n"
+        else:
+            self.value = "\n\\end{flushright}\n"  
+    
     
     # POST-HTML TOKENS
     def pspace(self):
@@ -324,6 +344,9 @@ class Parser(object):
     def pent(self):
         # TODO: NOTE
         pass
+    
+    def popup(self):
+        self.value = self.nested(self.value)
         
     def size(self):
         '''Adjust the size of the text.'''
@@ -369,7 +392,7 @@ class Parser(object):
     def punct(self):
         # TODO: Figure out `` and " for quotes
         '''Write punctuation to file, escaping any characters with special functions in LaTeX.'''
-        escape = ["#", "$", "%", "&", "_", "\\", "{", "}"]
+        escape = ["#", "$", "%", "&", "_", "\\"]
         if self.value in escape: # Precede the punctuation with a backslash
             self.value = "\\" + self.value
         elif self.value == "°": # Replace degree symbol
@@ -380,6 +403,11 @@ class Parser(object):
             self.value = "---"
         elif self.value == "\|": # Replace pipe
             self.value = "\\textbar"
+        elif self.value == "}":
+            self.value = ""
+        elif self.value == "{":
+            self.value = ""
+        
     
     def word(self):
         # TODO: Fix large spaces after abbreviations (i.e., e.g., etc.)
