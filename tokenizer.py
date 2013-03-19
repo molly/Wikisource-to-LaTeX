@@ -49,7 +49,9 @@ class Tokenizer(object):
               'FORMAT', # Initial {| style="..."
               'NEWROW', # |-
               'TCELL', # Beginning of table cell
-              'BOXEDCELL', # For individually boxed cells
+              'WT_COLSPAN', # Number of columns for a cell to span
+              'WT_COLALIGN', # Text alignment for cell
+              'WT_BOXEDCELL', # For individually boxed cells
               'E_TCELL', # End of table cell
               'WT_LARGER', # Larger
               'WT_POPUP', # Popup note
@@ -59,6 +61,7 @@ class Tokenizer(object):
               'WT_ELLIPSES', # ... or ....
               'WT_CHECKBOX_EMPTY',
               'WT_CHECKBOX_CHECKED',
+              'WT_BOLDED',
               'WT_PUNCT',
               'WT_WORD',
               'WT_NUMBER',
@@ -194,12 +197,13 @@ class Tokenizer(object):
     
     def t_wikitable_FORMAT(self, token):
         # TODO: This regex will need to become much more complex as more instances are found
-        r'(?:\s?style\=")(?:\s?width\:\s?(?P<width>\d{1,3})%;?\s?)?(?:text\-align\:\s?(?P<textalign>center);?\s?)?(?:")'
-        token.value = (token.lexer.lexmatch.group('width', 'textalign'))
+        r'(?:\s?style\=")(?:\s?width\:\s?(?P<width>\d{1,3})%;?\s?)?(?:text\-align\:\s?(?P<textalign>center);?\s?)?(?:")(?:\s?border="(?P<border>\d)"\s?)?(?:\s?cellpadding="(?P<cellpadding>\d)"\s?)?(?:\s?cellspacing="(?P<cellspacing>\d)"\s?)?'
+        token.value = (token.lexer.lexmatch.group('width', 'textalign', 'border', 'cellpadding', 'cellspacing'))
         return token
-    
+
     def t_wikitable_NEWROW(self, token):
-        r'(\n?\|\-\s?\n)'
+        r'(?P<newrow>\n?\|\-\s?(?P<center>align="center")?\n)'
+        token.value = token.lexer.lexmatch.group('newrow', 'center')
         return token
     
     def t_wikitable_TCELL(self, token):
@@ -207,7 +211,17 @@ class Tokenizer(object):
         token.lexer.begin('tcell')
         return token
     
-    def t_tcell_BOXEDCELL(self, token):
+    def t_tcell_WT_COLSPAN(self, token):
+        r'(?:colspan="(?P<colspan>\d)"\|?)'
+        token.value = token.lexer.lexmatch.group('colspan')
+        return token
+    
+    def t_tcell_WT_COLALIGN(self, token):
+        r'(?:\s?style="text-align\:\s?(?P<align>.*?)"\|?)'
+        token.value = token.lexer.lexmatch.group('align')
+        return token
+        
+    def t_tcell_WT_BOXEDCELL(self, token):
         r'(?:style="border:\s1px\ssolid;"\s?\|\s?)(?:\{{2}popup\snote\|(?:.*?)\|)?(?P<text>.*?)(?:\}{2})?\s?(?=\s?\||\n)'
         token.value = token.lexer.lexmatch.group('text')
         return token
@@ -219,7 +233,7 @@ class Tokenizer(object):
         return token
     
     def t_tcell_WT_WHITESPACE(self, token):
-        r'(?:\s|\t|\r|\n|\&nbsp;)'
+        r'(?:\s|\t|\r|\n|\&nbsp;|<br\s?/>)'
         return token
     
     def t_tcell_WT_LARGER(self, token):
@@ -252,6 +266,11 @@ class Tokenizer(object):
     
     def t_tcell_WT_CHECKBOX_CHECKED(self,token):
         r'▣'
+        return token
+    
+    def t_tcell_WT_BOLDED(self, token):
+        r"""'{3}(?P<word>.*?)'{3}"""
+        token.value = token.lexer.lexmatch.group('word')
         return token
     
     def t_tcell_WT_PUNCT(self, token):

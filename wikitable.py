@@ -21,21 +21,28 @@
 
 __all__ = ['Wikitable']
 
+import re
+
 class Wikitable(object):
     def __init__(self):
         self.rows = [] # List containing each row of the table
         self.row_entries = [] # List containing each entry in the row
         self.table_text = '' # Full table text to be appended to output file
         
-        self.begin_table = '\\begin{tabularx}' # First line of table (\begin{tabularx}...)
+        self.begin_table = '\n\\begin{tabularx}' # First line of table (\begin{tabularx}...)
         self.table_body = '' # Body text
         self.cell = '' # Current cell
         self.cellb = '' # Prepend to cell
         self.celle = '' # Append to cell
-        self.align = ''
+        self.formatters = '' # Formatting keys
+        self.hline = '' # Borders
+        self.center = '' # Center for entire row
+        self.centere = '' # End center
+        self.width = None
+        self.numcols = None
     
     def add_cell(self):
-        self.cell = self.cellb + self.cell + self.celle
+        self.cell = self.center + self.cellb + self.cell + self.celle + self.centere
         self.row_entries.append(self.cell)
         self.cell = ''
         self.cellb = ''
@@ -55,18 +62,27 @@ class Wikitable(object):
     def format_body(self):
         self.table_body = '\n'
         num_cols = self.get_num_cols()
-        if self.align == 'center':
-            for row in self.rows:
-                while len(row) < num_cols:
-                    row.append(' ')
-                self.table_body += (' & '.join(row) + ' \\\\\n')
-            self.begin_table += "{" + ' '.join(['>{\\centering\\arraybackslash}X']*num_cols) + "}"
+        joiner = ' '
+        if 'border' in self.formatters:
+            joiner = ' | '
+        for row in self.rows:
+            length = int()
+            for entry in row:
+                c = re.match(r'\\multicolumn\{(?P<number>\d)\}', entry)
+                if c:
+                    length += int(c.group('number')) - 1
+            while (len(row) + length) < num_cols:
+                row.append(' ')
+            if 'center' in self.formatters:
+                self.table_body += (' & '.join(row) + ' \\\\ ' + self.hline + ' \n')
+            else:
+                self.table_body += (' & '.join(row) + ' \\\\' + self.hline + ' \n')
+        if 'center' in self.formatters:
+            self.begin_table += "{" + joiner.join(['>{\\centering\\arraybackslash}X']*num_cols) + "}"
         else:
-            for row in self.rows:
-                while len(row) < num_cols:
-                    row.append(' ')
-                self.table_body += (' & '.join(row) + ' \\\\\n')
-            self.begin_table += "{" + ' '.join(['X']*num_cols) + "}"
+            self.begin_table += "{" + joiner.join(['X']*num_cols) + "}"
+        if self.hline:
+            self.begin_table += '\n' + self.hline
         
     def get_num_cols(self):
         '''Count the number of columns in the table.'''
@@ -74,13 +90,14 @@ class Wikitable(object):
         for row in self.rows:
             if len(row) > numcols:
                 numcols = len(row)
+        self.numcols = numcols
         return numcols
         
     def larger(self):
-        self.cellb="\\large{"
-        self.celle="}"
+        self.cellb="\\begin{large}"
+        self.celle="\\end{large}"
     
-    def new_row(self):
+    def new_row(self, center=None):
         if len(self.row_entries) > 0:
             self.rows.append(self.row_entries)
             self.row_entries = []
@@ -88,12 +105,12 @@ class Wikitable(object):
     def set_width(self, w):
         if w == '100':
             width = "{\\textwidth}"
+            self.width = 1
         elif int(w) < 70:
             width = "{.70\\textwidth}" # Forcing mininum table width of 70%
+            self.width = .7
         else:
             width = "{." + w + "\\textwidth}"
+            self.width = w/100
         self.begin_table += width
-        
-    def strikeout(self):
-        self.cellb = "\\begin{ulem}"
             

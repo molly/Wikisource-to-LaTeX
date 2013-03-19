@@ -44,9 +44,13 @@ class Parser(object):
     def nested(self, text):
         '''Deal with tokens that may not have been caught because they were nested within other
         tokens (e.g., punctuation in {{center}})'''
-        m = re.search('[{]{2}popup\snote\|(.*?)\|', text)
-        if m:
-            text = text[:m.start()] + text[m.end():]
+        a = re.search('[{]{2}popup\snote\|(.*?)\|', text)
+        if a:
+            text = text[:a.start()] + text[a.end():]
+        b = re.match('[{]{2}x-smaller\|(?P<text>.*?)[}]{2}', text)
+        if b:
+            text = b.group('text')
+            text = "\\footnotesize{" + text + "}"
         text = text.replace("#", "\#").replace("$", "\$").replace("%", "\%").replace("~", "\~")
         text = text.replace("_", "\_").replace("^", "\^").replace("|", "\|").replace("&", "\&")
         return text
@@ -124,20 +128,33 @@ class Parser(object):
         del self.wt
     
     def format(self):
-        if self.value[0]:
+        if self.value[0]: # Table width
             self.wt.set_width(self.value[0])
-        if self.value[1]:
-            self.wt.align = self.value[1]
+        if self.value[1]: # Text alignment
+            self.wt.formatters += (self.value[1] + ' ')
+        if self.value[2]: # Border
+            self.wt.formatters += 'border '
+            self.wt.hline = "\\hline"
         self.value = ''
+
+    def wt_colspan(self):
+        self.wt.cellb = "\\multicolumn{" + self.value + "}{|l|}{" + self.wt.cellb
+        self.wt.celle = "}"
+        
+    def wt_colalign(self):
+        if self.value == 'center':
+            self.wt.cellb += "\\begin{center}"
+            self.wt.celle += "\\end{center}"
+        self.value = ''     
                 
     def newrow(self):
-        self.wt.new_row()
-        self.value = ''  
+        self.wt.new_row(self.value[1])
+        self.value = ''
         
     def tcell(self):
         self.value = ''
         
-    def boxedcell(self):
+    def wt_boxedcell(self):
         self.wt.cell_append("\\fbox{" + self.value + "}")
         self.value = ''
     
@@ -173,6 +190,12 @@ class Parser(object):
     def wt_checkbox_checked(self):
         self.wt.cell_append("\\CheckedBox~")
         self.value = ''
+        
+    def wt_bolded(self):
+        self.wt.cellb += "\\textbf{"
+        self.wt.cell = self.nested(self.value)
+        self.wt.celle += "}"
+        self.value = ''
     
     def wt_punct(self):
         # TODO: Figure out `` and " for quotes
@@ -207,6 +230,8 @@ class Parser(object):
     def wt_whitespace(self):
         if self.value == '&nbsp;':
             self.wt.cell_append('')
+        if '<br' in self.value:
+            self.wt.cell_append('\\newline ')
         else:
             self.wt.cell_append(' ')
         self.value = ''
