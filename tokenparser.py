@@ -19,8 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging, re
-from wikitable import Wikitable
+import logging, re, wikitable
 
 class Parser(object):
     def __init__(self, outputfile):
@@ -120,123 +119,23 @@ class Parser(object):
     
     # WIKITABLE FUNCTIONS
     def wikitable(self):
-        self.wt = Wikitable()
+        self.table = wikitable.Table()
         self.value = ''
     
     def e_wikitable(self):
-        self.value = self.wt.end()
-        del self.wt
-    
-    def format(self):
-        if self.value[0]: # Table width
-            self.wt.set_width(self.value[0])
-        if self.value[1]: # Text alignment
-            self.wt.formatters += (self.value[1] + ' ')
-        if self.value[2]: # Border
-            self.wt.formatters += 'border '
-            self.wt.hline = "\\hline"
-        self.value = ''
-
-    def wt_colspan(self):
-        self.wt.colspan(self.value)
-        self.value = ''
-        
-    def wt_colalign(self):
-        # TODO: Reimplement this so that it will work with multicolumn tables
-#        if self.value == 'center':
-#            self.wt.cellb += "\\begin{center}"
-#            self.wt.celle += "\\end{center}"
-        self.value = ''     
-                
-    def newrow(self):
-        self.wt.new_row(self.value[1])
-        self.value = ''
+        self.value = self.table.end()
+        del self.table
         
     def tcell(self):
+        self.cell = wikitable.Cell(self.table)
         self.value = ''
         
-    def wt_boxedcell(self):
-        self.wt.cell_append("\\fbox{" + self.value + "}")
-        self.value = ''
-    
     def e_tcell(self):
-        self.wt.add_cell()
+        self.cell = self.cell.end() # Get the final text of the cell
+        self.table.append_cell(self.cell) # Add the cell to the table
+        self.cell.reset() # Reset cell values for next time
         self.value = ''
         
-    def wt_larger(self):
-        self.wt.larger()
-        self.value = ''
-        
-    def wt_strikeout(self):
-        self.wt.cell_append("\\sout{")
-        self.value = ''
-        
-    def wt_e_strikeout(self):
-        self.wt.cell_append("}")
-        self.value = ''
-        
-    def wt_ellipses(self):
-        '''Convert to proper ellipsis formatting.'''
-        if self.value == "...":
-            self.value = "\\ldots"
-        else:
-            self.value = "\\ldots."
-        self.wt.cell_append(self.value)
-        self.value = ''
-        
-    def wt_checkbox_empty(self):
-        self.wt.cell_append("\\Square~")
-        self.value = ''
-    
-    def wt_checkbox_checked(self):
-        self.wt.cell_append("\\CheckedBox~")
-        self.value = ''
-        
-    def wt_bolded(self):
-        self.wt.cellb += "\\textbf{"
-        self.wt.cell = self.nested(self.value)
-        self.wt.celle += "}"
-        self.value = ''
-    
-    def wt_punct(self):
-        # TODO: Figure out `` and " for quotes
-        '''Write punctuation to file, escaping any characters with special functions in LaTeX.'''
-        escape = ["#", "$", "%", "&", "_", "\\", "{", "}"]
-        if self.value in escape: # Precede the punctuation with a backslash
-            self.value = "\\" + self.value
-        elif self.value == "°": # Replace degree symbol
-            self.value = "\\degree"
-        elif self.value == "–": # Replace en dash
-            self.value = "--"
-        elif self.value == "—": # Replace em dash
-            self.value = "---"
-        elif self.value == "\|": # Replace pipe
-            self.value = "\\textbar"
-        self.wt.cell_append(self.value)
-        self.value = ''
-    
-    def wt_word(self):
-        # TODO: Fix large spaces after abbreviations (i.e., e.g., etc.)
-        '''Write word to file, using compose codes for any accented characters.'''
-        if "é" in self.value:
-            self.value = self.value.replace("é", "\\'{e}")
-        self.wt.cell_append(self.value)
-        self.value = ''
-        
-    def wt_number(self):
-        '''Write number(s) to file without changing anything.'''
-        self.wt.cell_append(self.value)
-        self.value = ''
-        
-    def wt_whitespace(self):
-        if self.value == '&nbsp;':
-            self.wt.cell_append('')
-        if '<br' in self.value:
-            self.wt.cell_append('\\newline ')
-        else:
-            self.wt.cell_append(' ')
-        self.value = ''
-
     # PRE-HTML TOKENS
     def internallink(self):
         #TODO: INTERNAL LINK

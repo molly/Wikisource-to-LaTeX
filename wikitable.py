@@ -19,141 +19,59 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-__all__ = ['Wikitable']
+__all__ = ['Table', 'Cell']
 
-import re
+from collections import OrderedDict
 
-class Wikitable(object):
+class Table(object):
     def __init__(self):
-        self.rows = [] # List containing each row of the table
-        self.row_entries = [] # List containing each entry in the row
-        self.table_text = '' # Full table text to be appended to output file
+        # Storage for various parts of the table. These are all strings that will later be
+        # concatenated in order.
+        self.t = OrderedDict()
+        self.t['begin'] = '\\begin{tabularx}'   # Begin table environment
+        self.t['width'] = ''                    # Width of the full table
+        self.t['table_spec'] = ''               # Table column specifications
+        self.t['hline'] = ''                    # A beginning /hline in case the table is bordered
+        self.t['table_text'] = ''               # self.rows in its final text form
+        self.t['end'] = '\\end{tabularx}'       # End table environment
         
-        # Text that will be concatenated to form table
-        self.begin_table = '\n\\begin{tabularx}' # First line of table (\begin{tabularx}...)
-        self.table_body = '' # Body text
+        # Storage that is useful in creating the tables, but don't contain the final strings.
+        self.rows = []                          # List containing each row of the table
+        self.row_entries = []                   # List containing each entry in the row
         
-        # Text that will be concatenated to form cell
-        self.cell = '' # Current cell
-        self.cellb = '' # Prepend to cell
-        self.celle = '' # Append to cell
-        self.center = '' # Center for entire row
-        self.centere = '' # End center
-        
-        # Information about the table
-        self.formatters = '' # Formatting keys
-        self.hline = '' # Borders
-        self.width = None
-        self.num_cols = None
-        self.multicolumn = False
-        self.colwidth = None # If a multicolumn table, how wide is each column?
-    
-    def add_cell(self):
-        ''' Compile the parts of the cell, add it to the list of row entries.'''
-        self.cell = self.center + self.cellb + self.cell + self.celle + self.centere
-        self.row_entries.append(self.cell)
-        self.cell = ''
-        self.cellb = ''
-        self.celle = ''
-        
-    def cell_append(self, text):
-        '''Append string to existing text in the current cell.'''
-        self.cell += text
-        
-    def colspan(self, number):
-        self.multicolumn = True
-        if not self.colwidth:
-            self.get_col_style()
-        if 'border' in self.formatters:
-            self.cellb = "\\multicolumn{" + number + "}{|p{" + str(self.colwidth*number) + "}|}{" + self.cellb
-        else:
-            self.cellb = "\\multicolumn{" + number + "}{p{" + str(self.colwidth*number) + "}}{" + self.cellb
-        self.celle = "}"
+        # Table format settings, initialized with the default values
+        self.format = dict()
+        self.format['bordered'] = False         # Entire table is bordered
+        self.format['multicol'] = False         # True if table contains ANY multicolumns
+        self.format['colwidth'] = None          # If multicolumn table, width of each column
+
+    def append_cell(self, cell):
+        '''Add a fully-formatted cell to the table.'''
+        self.row_entries.append(cell)
         
     def end(self):
-        '''Finish up the table by appending the last row, formatting the body, and concatenating
-        the table text.'''
-        if len(self.row_entries) > 0:
-            self.rows.append(self.row_entries) # Append last row if it hasn't happened yet
-        self.format_body()
-        self.table_text = (self.begin_table + self.table_body + "\\end{tabularx} \\\\\n")
-        return self.table_text
+        '''Perform the final formatting and concatenation, return the LaTeX table to write to
+        the file.'''
+        pass
         
-    def format_body(self):
-        '''Create the LaTeX table declaration with the table width, number of columns, etc.'''
-        self.table_body = '\n'
-        self.get_num_cols()
+class Cell(object):
+    def __init__(self, table):
+        self.table = table                      # The table this cell will be a part of
+        self.cell = ['', '', '']                # The cell's preceding, body, and ending strings
         
-        for row in self.rows:
-            length = int()
-            for entry in row:
-                c = re.match(r'\\multicolumn\{(?P<number>\d)\}', entry)
-                if c:
-                    self.multicolumn = True
-                    length += int(c.group('number')) - 1
-            while (len(row) + length) < self.num_cols:
-                row.append(' ')
-            if 'center' in self.formatters:
-                self.table_body += (' & '.join(row) + ' \\\\ ' + self.hline + ' \n')
-            else:
-                self.table_body += (' & '.join(row) + ' \\\\' + self.hline + ' \n')
-        if not self.colwidth:
-            self.get_col_style()
-            
-    def get_col_style(self):
-        if 'border' in self.formatters:
-            j = ' | '
-        else:
-            j = ' '
-            
-        if self.multicolumn:
-            '''Can't use variable-width columns.'''
-            self.colwidth = self.width/self.num_cols
-            if 'center' in self.formatters:
-                self.begin_table += ("{" + j + j.join([('>{\\centering\\arraybackslash}p{' +
-                                                         str(self.colwidth) +
-                                                         '\\textwidth}')]*self.num_cols) + j + "}")
-            else:
-                self.begin_table += "{" + j + j.join([('p{' + str(self.colwidth) +
-                                                        '\\textwidth}')]*self.num_cols) + j + "}"
-        else:
-            if 'center' in self.formatters:
-                self.begin_table += ("{" + j +j.join(['>{\\centering\\' + 
-                                                       'arraybackslash}X']*self.num_cols) + j + "}")
-            else:
-                self.begin_table += "{" + j + j.join(['X']*self.num_cols) + j + "}"
-        if self.hline:
-            self.begin_table += '\n' + self.hline
+        # Row format settings, initialized with the default values
+        self.r_format = dict()
+        self.r_format['center'] = False
         
-    def get_num_cols(self):
-        '''Count the number of columns in the table.'''
-        num_cols = 0
-        for row in self.rows:
-            if len(row) > num_cols:
-                num_cols = len(row)
-        self.num_cols = num_cols
+        # Cell format settings, initialized with the default values
+        self.c_format = dict()
+        self.c_format['colspan'] = None         # Number of columns to span
         
-    def larger(self):
-        '''Begin larger text.''' # Get rid of this later?
-        self.cellb="\\begin{large}"
-        self.celle="\\end{large}"
+    def end(self):
+        '''Format and concatenate the cell, return it so it can be appended to the table.'''
+        pass
     
-    def new_row(self, center=None):
-        '''End the current row by appending row_entries to rows, then clearing row_entries.'''
-        if len(self.row_entries) > 0:
-            self.rows.append(self.row_entries)
-            self.row_entries = []
-        
-    def set_width(self, w):
-        '''Set the width of the table.'''
-        if w == '100':
-            width = "{\\textwidth}"
-            self.width = 1
-        elif int(w) < 70:
-            width = "{.70\\textwidth}" # Forcing mininum table width of 70%
-            self.width = .7
-        else:
-            width = "{." + w + "\\textwidth}"
-            self.width = w/100
-        self.begin_table += width
-            
+    def reset(self):
+        '''Resets only the cell details; retains row information.'''
+        self.cell = ['', '', '']
+        self.c_format['colspan'] = None
