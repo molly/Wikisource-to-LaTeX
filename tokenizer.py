@@ -53,19 +53,19 @@ class Tokenizer(object):
               'WT_COLALIGN', # Text alignment for cell
               'WT_BOXEDCELL', # For individually boxed cells
               'E_TCELL', # End of table cell
+              'WT_WHITESPACE',
               'WT_LARGER', # Larger
               'WT_POPUP', # Popup note
-              'WT_STRIKEOUT',
-              'WT_E_STRIKEOUT',
+              'WT_STRIKEOUT', # <s> in table cell
+              'WT_E_STRIKEOUT', # </s> in table cell
               'WT_E_TEMPLATE', # So it doesn't get hung up on the end of the larger template
               'WT_ELLIPSES', # ... or ....
-              'WT_CHECKBOX_EMPTY',
-              'WT_CHECKBOX_CHECKED',
-              'WT_BOLDED',
+              'WT_CHECKBOX_EMPTY', # Empty checkbox in table cell
+              'WT_CHECKBOX_CHECKED', # Checked box in table cell
+              'WT_BOLDED', 
               'WT_PUNCT',
               'WT_WORD',
               'WT_NUMBER',
-              'WT_WHITESPACE',
             # Tokens to check before HTML state  
               'INTERNALLINK',
               'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
@@ -89,9 +89,9 @@ class Tokenizer(object):
               # Aligned state
               'CENTERED', # {{center|...}} or {{c|...}}
               'E_CENTERED', # End of centered state
-              'RIGHT',
-              'E_RIGHT',
-              # General tokens (INITIAL state)
+              'RIGHT', # Right-aligned text
+              'E_RIGHT', # End of right aligned state
+              # General tokens
               'PSPACE', # {{nop}}
               'CINDENT', # Continued indent from prev page <noinclude>:</noinclude>
               'INDENT', # Line preceded by one or more :'s

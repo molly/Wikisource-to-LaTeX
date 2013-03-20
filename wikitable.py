@@ -42,6 +42,7 @@ class Wikitable(object):
         self.numcols = None
     
     def add_cell(self):
+        ''' Compile the parts of the cell, add it to the list of row entries.'''
         self.cell = self.center + self.cellb + self.cell + self.celle + self.centere
         self.row_entries.append(self.cell)
         self.cell = ''
@@ -49,10 +50,12 @@ class Wikitable(object):
         self.celle = ''
         
     def cell_append(self, text):
+        '''Append string to existing text in the current cell.'''
         self.cell += text
         
     def end(self):
-        '''Finish up the table.'''
+        '''Finish up the table by appending the last row, formatting the body, and concatenating
+        the table text.'''
         if len(self.row_entries) > 0:
             self.rows.append(self.row_entries) # Append last row if it hasn't happened yet
         self.format_body()
@@ -60,6 +63,7 @@ class Wikitable(object):
         return self.table_text
         
     def format_body(self):
+        '''Create the LaTeX table declaration with the table width, number of columns, etc.'''
         self.table_body = '\n'
         num_cols = self.get_num_cols()
         joiner = ' '
@@ -94,15 +98,18 @@ class Wikitable(object):
         return numcols
         
     def larger(self):
+        '''Begin larger text.''' # Get rid of this later?
         self.cellb="\\begin{large}"
         self.celle="\\end{large}"
     
     def new_row(self, center=None):
+        '''End the current row by appending row_entries to rows, then clearing row_entries.'''
         if len(self.row_entries) > 0:
             self.rows.append(self.row_entries)
             self.row_entries = []
         
     def set_width(self, w):
+        '''Set the width of the table.'''
         if w == '100':
             width = "{\\textwidth}"
             self.width = 1
