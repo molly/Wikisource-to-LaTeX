@@ -29,17 +29,24 @@ class Wikitable(object):
         self.row_entries = [] # List containing each entry in the row
         self.table_text = '' # Full table text to be appended to output file
         
+        # Text that will be concatenated to form table
         self.begin_table = '\n\\begin{tabularx}' # First line of table (\begin{tabularx}...)
         self.table_body = '' # Body text
+        
+        # Text that will be concatenated to form cell
         self.cell = '' # Current cell
         self.cellb = '' # Prepend to cell
         self.celle = '' # Append to cell
-        self.formatters = '' # Formatting keys
-        self.hline = '' # Borders
         self.center = '' # Center for entire row
         self.centere = '' # End center
+        
+        # Information about the table
+        self.formatters = '' # Formatting keys
+        self.hline = '' # Borders
         self.width = None
-        self.numcols = None
+        self.num_cols = None
+        self.multicolumn = False
+        self.colwidth = None # If a multicolumn table, how wide is each column?
     
     def add_cell(self):
         ''' Compile the parts of the cell, add it to the list of row entries.'''
@@ -53,6 +60,16 @@ class Wikitable(object):
         '''Append string to existing text in the current cell.'''
         self.cell += text
         
+    def colspan(self, number):
+        self.multicolumn = True
+        if not self.colwidth:
+            self.get_col_style()
+        if 'border' in self.formatters:
+            self.cellb = "\\multicolumn{" + number + "}{|p{" + str(self.colwidth*number) + "}|}{" + self.cellb
+        else:
+            self.cellb = "\\multicolumn{" + number + "}{p{" + str(self.colwidth*number) + "}}{" + self.cellb
+        self.celle = "}"
+        
     def end(self):
         '''Finish up the table by appending the last row, formatting the body, and concatenating
         the table text.'''
@@ -65,37 +82,56 @@ class Wikitable(object):
     def format_body(self):
         '''Create the LaTeX table declaration with the table width, number of columns, etc.'''
         self.table_body = '\n'
-        num_cols = self.get_num_cols()
-        joiner = ' '
-        if 'border' in self.formatters:
-            joiner = ' | '
+        self.get_num_cols()
+        
         for row in self.rows:
             length = int()
             for entry in row:
                 c = re.match(r'\\multicolumn\{(?P<number>\d)\}', entry)
                 if c:
+                    self.multicolumn = True
                     length += int(c.group('number')) - 1
-            while (len(row) + length) < num_cols:
+            while (len(row) + length) < self.num_cols:
                 row.append(' ')
             if 'center' in self.formatters:
                 self.table_body += (' & '.join(row) + ' \\\\ ' + self.hline + ' \n')
             else:
                 self.table_body += (' & '.join(row) + ' \\\\' + self.hline + ' \n')
-        if 'center' in self.formatters:
-            self.begin_table += "{" + joiner.join(['>{\\centering\\arraybackslash}X']*num_cols) + "}"
+        if not self.colwidth:
+            self.get_col_style()
+            
+    def get_col_style(self):
+        if 'border' in self.formatters:
+            j = ' | '
         else:
-            self.begin_table += "{" + joiner.join(['X']*num_cols) + "}"
+            j = ' '
+            
+        if self.multicolumn:
+            '''Can't use variable-width columns.'''
+            self.colwidth = self.width/self.num_cols
+            if 'center' in self.formatters:
+                self.begin_table += ("{" + j + j.join([('>{\\centering\\arraybackslash}p{' +
+                                                         str(self.colwidth) +
+                                                         '\\textwidth}')]*self.num_cols) + j + "}")
+            else:
+                self.begin_table += "{" + j + j.join([('p{' + str(self.colwidth) +
+                                                        '\\textwidth}')]*self.num_cols) + j + "}"
+        else:
+            if 'center' in self.formatters:
+                self.begin_table += ("{" + j +j.join(['>{\\centering\\' + 
+                                                       'arraybackslash}X']*self.num_cols) + j + "}")
+            else:
+                self.begin_table += "{" + j + j.join(['X']*self.num_cols) + j + "}"
         if self.hline:
             self.begin_table += '\n' + self.hline
         
     def get_num_cols(self):
         '''Count the number of columns in the table.'''
-        numcols = 0
+        num_cols = 0
         for row in self.rows:
-            if len(row) > numcols:
-                numcols = len(row)
-        self.numcols = numcols
-        return numcols
+            if len(row) > num_cols:
+                num_cols = len(row)
+        self.num_cols = num_cols
         
     def larger(self):
         '''Begin larger text.''' # Get rid of this later?

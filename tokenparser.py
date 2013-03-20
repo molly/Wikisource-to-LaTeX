@@ -138,14 +138,14 @@ class Parser(object):
         self.value = ''
 
     def wt_colspan(self):
-        self.wt.cellb = "\\multicolumn{" + self.value + "}{|l|}{" + self.wt.cellb
-        self.wt.celle = "}"
+        self.wt.colspan(self.value)
         self.value = ''
         
     def wt_colalign(self):
-        if self.value == 'center':
-            self.wt.cellb += "\\begin{center}"
-            self.wt.celle += "\\end{center}"
+        # TODO: Reimplement this so that it will work with multicolumn tables
+#        if self.value == 'center':
+#            self.wt.cellb += "\\begin{center}"
+#            self.wt.celle += "\\end{center}"
         self.value = ''     
                 
     def newrow(self):
