@@ -50,8 +50,7 @@ class Tokenizer(object):
               'NEWROW', # |-
               'TCELL', # Beginning of table cell
               'WT_COLSPAN', # Number of columns for a cell to span
-              'WT_COLALIGN', # Text alignment for cell
-              'WT_BOXEDCELL', # For individually boxed cells
+              'WT_STYLE',
               'E_TCELL', # End of table cell
               'CELL_CONTENTS', # Everything within a table cell
             # Tokens to check before HTML state  
@@ -190,8 +189,7 @@ class Tokenizer(object):
         return token
 
     def t_wikitable_NEWROW(self, token):
-        r'(?P<newrow>\n?\|\-\s?(?P<center>align="center")?\n)'
-        token.value = token.lexer.lexmatch.group('newrow', 'center')
+        r'(?P<newrow>\n?\|\-(.*?)\n)'
         return token
     
     def t_wikitable_TCELL(self, token):
@@ -204,13 +202,9 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('colspan')
         return token
     
-    def t_tcell_WT_COLALIGN(self, token):
-        r'(?:\s?style="text-align\:\s?(?P<align>.*?)"\|?)'
-        token.value = token.lexer.lexmatch.group('align')
-        return token
-        
-    def t_tcell_WT_BOXEDCELL(self, token):
-        r'(?:style="border:\s1px\ssolid;"\s?\|\s?)'
+    def t_tcell_WT_STYLE(self, token):
+        r'style="(?P<style>.*?)"'
+        token.value = token.lexer.lexmatch.group('style')
         return token
     
     def t_tcell_E_TCELL(self, token):
@@ -243,8 +237,7 @@ class Tokenizer(object):
         return token
     
     def t_RUNHEAD(self, token):
-        r'[{]{2}rh(?:\|left=\s?(?P<left>.*?)\s?)?(?:\|center=\s?(?P<center>.*?)\s?)?(?:\|right=\s?(?P<right>.*?)\s?)?[}]{2}(?!\})'
-        token.value = token.lexer.lexmatch.group('left','center','right')
+        r'(\{{2}rh(?:(?:\{{2}.*?\}{2})|(?:[^\{])*?)+\}{2})'
         return token
     
     def t_FORCED_WHITESPACE(self, token):
@@ -459,6 +452,5 @@ class Tokenizer(object):
                     break      # No more input
                 l_token = [token.type, token.value]
                 self.token_list.append(l_token)
-                print(token)
                 tokenfile.write(str(token) + '\n')
         return self.token_list

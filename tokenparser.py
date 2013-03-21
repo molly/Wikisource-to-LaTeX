@@ -20,13 +20,13 @@
 # SOFTWARE.
 
 import logging, re, wikitable
+from reparse import Reparser
 
 class Parser(object):
     def __init__(self, outputfile):
         self.logger = logging.getLogger("W2L")
         self.output = outputfile
-        self.tell = None
-        self.columntell = None
+        self.reparse = Reparser()
         
     def dispatch(self, t_list):
         for token in t_list:
@@ -149,15 +149,15 @@ class Parser(object):
         self.table.format['multicol'] = True
         self.value = ''
         
-    def wt_colalign(self):
-        self.cell.c_format['center'] = True
-        self.value = ''
-    
-    def wt_boxedcell(self):
-        self.cell.c_format['border'] = True
+    def wt_style(self):
+        self.cell.cell_style(self.value, self.row_center)
         self.value = ''
                 
     def newrow(self):
+        if 'align="center"' in self.value:
+            self.row_center = True
+        else:
+            self.row_center = False
         self.table.append_row()
         self.value = ''
         
@@ -186,8 +186,9 @@ class Parser(object):
         pass
         
     def runhead(self):
-        #TODO: RUNHEAD
-        pass
+        '''We have to call in the big guns for these ones.'''
+        self.value = self.reparse.running_header(self.value)
+        print(self.value)
     
     # HTML TOKENS
     def olist(self):

@@ -116,11 +116,11 @@ class Table(object):
                 if type(member) is list:
                     if self.format['border']:
                         new_row.append('\\multicolumn{' + member[0] + '}{|p{' +
-                                       str(self.format['colwidth'] * 0.8 * int(member[0]))+
+                                       str(round(self.format['colwidth'] * int(member[0]), 2))+
                                        '\\textwidth}|}{'+ member[1] + '}')
                     else:
                         new_row.append('\\multicolumn{' + member[0] + '}{p{' +
-                                       str(self.format['colwidth'] * 0.8 * int(member[0]))+
+                                       str(round(self.format['colwidth'] * int(member[0]), 2))+
                                        '\\textwidth}}{'+ member[1] + '}')
                 else:
                     new_row.append(member)
@@ -149,6 +149,7 @@ class Table(object):
         
 class Cell(object):
     def __init__(self, table):
+        # TODO: Though "center" is being stored, it is not being implemented in any way.
         self.table = table                      # The table this cell will be a part of
         self.cell = ''                          # The cell string
         
@@ -162,8 +163,16 @@ class Cell(object):
         self.c_format['border'] = None          # Border around just this cell?
         self.c_format['center'] = False         # Center just this cell?
     
+    
     def append(self, text):
         self.cell += text
+        
+    def cell_style(self, style, row_center=False):
+        # TODO: Allow border-left/right: 0px, if possible.
+        if 'border: 1px solid' in style:
+            self.c_format['border'] = True
+        if 'text-align: center' in style or row_center:
+            self.c_format['center'] = True
         
     def end(self):
         '''Format and concatenate the cell, return it so it can be appended to the table.'''
@@ -172,17 +181,19 @@ class Cell(object):
     
     def parse(self):
         '''Parses out any formatting from the cell's content.'''
+        if ' |' in self.cell[0:2]:
+            self.cell = self.cell[2:]
         self.cell = re.sub(r'\{{2}popup\snote\|(.*?)\|(?P<text>.*?)\}{2}', r'\g<text>', self.cell)
         self.cell = re.sub(r'&nbsp;', ' ', self.cell)
         self.cell = re.sub(r'\{{2}larger\|(?P<text>.*?)\}{2}',
                               r'\\begin{large}\g<text>\\end{large}', self.cell)
-        self.cell = re.sub(r'{{2}x-smaller\|(?P<text>.*?)\}{2}',
+        self.cell = re.sub(r'{{2}x-smaller(?:\sblock)?\|(?P<text>.*?)\}{2}',
                               r'\\begin{footnotesize}\g<text>\\end{footnotesize}', self.cell)
         self.cell = re.sub(r'<s>(?P<text>.*?)</s>', r'\\sout{\g<text>}', self.cell)
         self.cell = re.sub(r"\s?'''(?P<text>.*?)'''", r'\\textbf{\g<text>}', self.cell)
         self.cell = re.sub(r"(''|\{{2}u\|)(?P<text>.*?)(''|\}{2})", r'\\textit{\g<text>}', self.cell)
         self.cell = re.sub(r'<br\s?/?>', r' \\newline ', self.cell)
-        self.cell = self.cell.replace("#", "\#").replace("$", "\$").replace("%", "\%")
+        self.cell = self.cell.replace("#", "\#").replace("$", "\$").replace("%", "\%").replace("|", "\\textbar")
         self.cell = self.cell.replace("_", "\_").replace("^", "\^").replace("~", "\~")
         self.cell = self.cell.replace("&", "\&").replace("□", "\\Square~").replace("▣", "\\CheckedBox~")
         if self.c_format['border']:
