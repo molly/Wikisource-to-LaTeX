@@ -55,10 +55,7 @@ class Parser(object):
         return text
                 
     def write(self, text):
-        if type(text) is tuple:
-            # Just for now until all the functions are written
-            pass
-        else:
+        if type(text) is str:
             self.output.write(text)
         
 #===================================================================================================
@@ -131,9 +128,33 @@ class Parser(object):
         self.value = ''
         
     def e_tcell(self):
-        self.cell = self.cell.end() # Get the final text of the cell
-        self.table.append_cell(self.cell) # Add the cell to the table
+        self.value = self.cell.end() # Get the final text of the cell
+        self.table.append_cell(self.value) # Add the cell to the table
         self.cell.reset() # Reset cell values for next time
+        
+    def format(self):
+        # TODO: Add cellpadding/cellspacing?
+        if self.value[0]:
+            self.table.set_width(self.value[0])
+        if self.value[1]:
+            self.table.set_alignment(self.value[1])
+        if self.value[2]:
+            self.table.format['border'] = True
+
+    def wt_colspan(self):
+        self.cell.c_format['colspan'] = self.value
+        
+    def wt_colalign(self):
+        self.cell.c_format['center'] = True
+    
+    def wt_boxedcell(self):
+        self.cell.c_format['border'] = True
+                
+    def newrow(self):
+        self.table.append_row()
+        
+    def cell_contents(self):
+        self.cell.append(self.value)
         self.value = ''
         
     # PRE-HTML TOKENS

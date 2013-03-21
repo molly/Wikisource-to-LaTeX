@@ -53,19 +53,7 @@ class Tokenizer(object):
               'WT_COLALIGN', # Text alignment for cell
               'WT_BOXEDCELL', # For individually boxed cells
               'E_TCELL', # End of table cell
-              'WT_WHITESPACE',
-              'WT_LARGER', # Larger
-              'WT_POPUP', # Popup note
-              'WT_STRIKEOUT', # <s> in table cell
-              'WT_E_STRIKEOUT', # </s> in table cell
-              'WT_E_TEMPLATE', # So it doesn't get hung up on the end of the larger template
-              'WT_ELLIPSES', # ... or ....
-              'WT_CHECKBOX_EMPTY', # Empty checkbox in table cell
-              'WT_CHECKBOX_CHECKED', # Checked box in table cell
-              'WT_BOLDED', 
-              'WT_PUNCT',
-              'WT_WORD',
-              'WT_NUMBER',
+              'CELL_CONTENTS', # Everything within a table cell
             # Tokens to check before HTML state  
               'INTERNALLINK',
               'PAGEQUALITY', # <pagequality level="4" user="GorillaWarfare" />
@@ -222,67 +210,17 @@ class Tokenizer(object):
         return token
         
     def t_tcell_WT_BOXEDCELL(self, token):
-        r'(?:style="border:\s1px\ssolid;"\s?\|\s?)(?:\{{2}popup\snote\|(?:.*?)\|)?(?P<text>.*?)(?:\}{2})?\s?(?=\s?\||\n)'
-        token.value = token.lexer.lexmatch.group('text')
+        r'(?:style="border:\s1px\ssolid;"\s?\|\s?)'
         return token
     
     def t_tcell_E_TCELL(self, token):
-        r'\s?(?=\s?\||\n)'
+        r'\s?(?=\s?\|{2}|\n)'
         token.lexer.begin('wikitable')
-        token.value = ' '
+        token.value = 'endcell'
         return token
     
-    def t_tcell_WT_WHITESPACE(self, token):
-        r'(?:\s|\t|\r|\n|\&nbsp;|<br\s?/>)'
-        return token
-    
-    def t_tcell_WT_LARGER(self, token):
-        r'[{]{2}larger\|'
-        return token
-    
-    def t_tcell_WT_POPUP(self, token):
-        r'[{]{2}popup\snote\|(.*?)\|'
-        pass
-    
-    def t_tcell_WT_STRIKEOUT(self, token):
-        r'<s>'
-        return token
-    
-    def t_tcell_WT_E_STRIKEOUT(self, token):
-        r'</s>'
-        return token
-    
-    def t_tcell_WT_E_TEMPLATE(self, token):
-        r'[}]{2}'
-        pass
-    
-    def t_tcell_WT_ELLIPSES(self, token):
-        r'[.]{3,4}'
-        return token
-    
-    def t_tcell_WT_CHECKBOX_EMPTY(self, token):
-        r'□'
-        return token
-    
-    def t_tcell_WT_CHECKBOX_CHECKED(self,token):
-        r'▣'
-        return token
-    
-    def t_tcell_WT_BOLDED(self, token):
-        r"""'{3}(?P<word>.*?)'{3}"""
-        token.value = token.lexer.lexmatch.group('word')
-        return token
-    
-    def t_tcell_WT_PUNCT(self, token):
-        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~°–—]"""
-        return token
-    
-    def t_tcell_WT_WORD(self, token):
-        r'[a-zA-Zé]+'
-        return token
-    
-    def t_tcell_WT_NUMBER(self, token):
-        r'[0-9]+'
+    def t_tcell_CELL_CONTENTS(self, token):
+        r'(.+?)'
         return token
     
     # Tokens to be checked before HTML state
@@ -514,7 +452,7 @@ class Tokenizer(object):
         '''Read through the text file and tokenize.'''
         self.lexer.input(data)
         self.token_list = list()
-        with codecs.open(os.curdir + '/test.txt', 'w+', 'utf-8') as tokenfile:
+        with codecs.open(os.curdir + '/tokenout.txt', 'w+', 'utf-8') as tokenfile:
             while True:
                 token = self.lexer.token()
                 if not token:

@@ -1,0 +1,73 @@
+<noinclude><pagequality level="4" user="Digipoke" /><div class="pagetext"><p style='text-align:center; font-size:83%;'><b>Declassified</b> per [[Executive_Order_13526#sect3.3|Executive Order 13526, Section 3.3]]<br>NND Project Number: NND 63316. By: NWD Date: 2011</p>
+
+
+</noinclude>{{center|{{larger|FINAL REPORT OSD}}<br/>
+{{larger|Vietnam Task Force & Index}}}}<noinclude><references/></div></noinclude><noinclude><pagequality level="4" user="Digipoke" /><div class="pagetext"><p style='text-align:center; font-size:83%;'><b>Declassified</b> per [[Executive_Order_13526#sect3.3|Executive Order 13526, Section 3.3]]<br>NND Project Number: NND 63316. By: NWD Date: 2011</p>
+
+
+</noinclude>{{center|{{x-larger|EXECUTIVE SECRETARIAT}}}}
+
+{| style="width: 50%; text-align: center;"
+|-
+| TLE || JJ || RMM || KDA ||style="border: 1px solid;" | {{popup note|This text is circled in pencil.|S/S-A}}
+|-
+|&nbsp;
+|-
+| RHM || AL || LA || NP || S/S-I
+|-
+| || || || || S/S-O
+|-
+| RTC || HHB || BF || PW || S/S-S
+|-
+|&nbsp;
+|-
+| JC || TMT || JM || style="border: 1px solid;" | {{popup note|This text is circled in pencil.|HCB}} || S/S-EX
+|}
+
+{{rule|height=2px}}
+
+{| style="width: 100%;"
+|-
+| {{larger|□ ACTION}} || {{larger|□ INFORMATION}}
+|-
+| {{larger|□ COMMENTS PLEASE}} || {{larger|□ YOUR FILES}}
+|- 
+| {{larger|□ FOLLOW UP}} || {{larger|□ PER CONVERSATION}}
+|-
+| {{larger|{{popup note|This box is checked in pencil.|▣ PLEASE SEE/}}<s>{{popup note|This text is struck out in pencil.|CALL ME}}</s>}} || {{larger|□}}
+|}
+
+{{rule|height=2px}}
+
+{{larger|REMARKS}}
+
+
+{{c|{{larger|{{popup note|Handwritten|Any S/S involvement?}}}}}}
+
+
+
+
+
+{{right|{{popup note|Handwritten|RTC}}}}
+
+{{rule|height=2px}}
+
+{| style="width: 100%; text-align: center;"
+|-
+| T. L. ELIOT, JR. || R. H. MILLER || R. T. CURRAN
+|-
+| X22540 || X23126 || X28448
+|}<noinclude><references/></div></noinclude><noinclude><pagequality level="4" user="Digipoke" /><div class="pagetext"><p style='text-align:center; font-size:83%;'><b>Declassified</b> per [[Executive_Order_13526#Sect3.3|Executive Order 13526, Section 3.3]]<br>NND Project Number: NND 63316. By: NWD Date: 2011</p>
+{{right|SecDef/CCS Regrading Action #35-71}}
+
+
+</noinclude>{| style="width:100%" border="1" cellpadding="1" cellspacing="0"
+|colspan="2" style="text-align: center"| '''OFFICE OF THE SECRETARY OF DEFENSE REGRADING ACTION'''
+|colspan="2"| '''{{x-smaller|DATE}}'''<br/><br/>23 June 1971
+|-
+|colspan="4"| '''{{x-smaller|FROM:}}'''<br/>Top Secret Control Officer, SecDef/Classified Control Section, Room 31948, The Pentagon, Washington, D. C. 20301
+|-
+|colspan="4"| '''{{x-smaller|TO:}}'''<br/>State Department, ATTENTION: Document Control/Security Officer, Washington, D. C. 20520
+|-align="center"
+|'''{{x-smaller|DOCUMENT}}'''<br/>'''{{x-smaller|(Type, Office of Origin, Date, Subject)}}''' || '''{{x-smaller|CONTROL NUMBER}}''' || '''{{x-smaller|CLASSIFICATION}}''' || '''{{x-smaller|REGRADED TO}}'''
+|}

@@ -46,7 +46,7 @@ if __name__ == "__main__":
         doc.json_to_text()
         
     # Open and read test file
-    with codecs.open(os.curdir + '/text/0/0.txt', 'r', 'utf-8') as original:
+    with codecs.open(os.curdir + '/input.txt', 'r', 'utf-8') as original:
         test_data = original.read()
     original.close()
 
@@ -55,6 +55,6 @@ if __name__ == "__main__":
     token_list = tokenizer.analyze(test_data)
     if not os.path.exists(os.curdir + '/latex'):
         os.mkdir(os.curdir + '/latex')
-    with codecs.open(os.curdir + '/latex/testoutput.txt', 'w+', 'utf-8') as outputfile:
+    with codecs.open(os.curdir + '/latex/output.txt', 'w+', 'utf-8') as outputfile:
         parser = Parser(outputfile)
         parser.dispatch(token_list)

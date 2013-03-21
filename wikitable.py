@@ -21,6 +21,7 @@
 
 __all__ = ['Table', 'Cell']
 
+import re
 from collections import OrderedDict
 
 class Table(object):
@@ -41,18 +42,38 @@ class Table(object):
         
         # Table format settings, initialized with the default values
         self.format = dict()
-        self.format['bordered'] = False         # Entire table is bordered
+        self.format['border'] = False         # Entire table is bordered
         self.format['multicol'] = False         # True if table contains ANY multicolumns
         self.format['colwidth'] = None          # If multicolumn table, width of each column
+        self.format['alignment'] = 'left'       # Text alignment of ALL the cells
 
     def append_cell(self, cell):
         '''Add a fully-formatted cell to the table.'''
         self.row_entries.append(cell)
         
+    def append_row(self):
+        if len(self.row_entries) > 0:
+            self.rows.append(self.row_entries)
+        self.row_entries = []
+        
     def end(self):
         '''Perform the final formatting and concatenation, return the LaTeX table to write to
         the file.'''
-        pass
+        if len(self.row_entries) > 0:
+            self.rows.append(self.row_entries)
+        
+    def set_alignment(self, a):
+        if a == 'center':
+            self.format['alignment'] = 'center'
+    
+    def set_width(self, w):
+        w = round(float(w)/100, 2)
+        if w == 1:
+            self.t['width'] = '{\\textwidth}'
+        elif w < .7:
+            self.t['width'] = '{0.7\\textwidth}'
+        else:
+            self.t['width'] = '{' + str(w) + '\\textwidth}'
         
 class Cell(object):
     def __init__(self, table):
@@ -66,10 +87,21 @@ class Cell(object):
         # Cell format settings, initialized with the default values
         self.c_format = dict()
         self.c_format['colspan'] = None         # Number of columns to span
+        self.c_format['border'] = None          # Border around just this cell?
+        self.c_format['center'] = False         # Center just this cell?
+    
+    def append(self, text):
+        self.cell[1] += text
         
     def end(self):
         '''Format and concatenate the cell, return it so it can be appended to the table.'''
-        pass
+        self.parse()
+        return ''.join(self.cell)
+    
+    def parse(self):
+        '''Parses out any formatting from the cell's content.'''
+        self.cell[1] = re.sub('\{{2}popup\snote\|(.*?)\|(?P<text>.*?)\}{2}', '\g<text>', self.cell[1])
+        print(self.cell)
     
     def reset(self):
         '''Resets only the cell details; retains row information.'''
