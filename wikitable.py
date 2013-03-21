@@ -26,15 +26,18 @@ from collections import OrderedDict
 
 class Table(object):
     def __init__(self):
+        # Text containing the full table that will be returned
+        self.table = ''
+        
         # Storage for various parts of the table. These are all strings that will later be
         # concatenated in order.
         self.t = OrderedDict()
         self.t['begin'] = '\\begin{tabularx}'   # Begin table environment
-        self.t['width'] = ''                    # Width of the full table
+        self.t['width'] = '{\\textwidth}'         # Width of the full table
         self.t['table_spec'] = ''               # Table column specifications
         self.t['hline'] = ''                    # A beginning /hline in case the table is bordered
         self.t['table_text'] = ''               # self.rows in its final text form
-        self.t['end'] = '\\end{tabularx}'       # End table environment
+        self.t['end'] = '\\end{tabularx} \\\\\n'       # End table environment
         
         # Storage that is useful in creating the tables, but don't contain the final strings.
         self.rows = []                          # List containing each row of the table
@@ -42,9 +45,11 @@ class Table(object):
         
         # Table format settings, initialized with the default values
         self.format = dict()
-        self.format['border'] = False         # Entire table is bordered
+        self.format['twidth'] = 1               # Width of entire table as coefficient of /textwidth
+        self.format['border'] = False           # Entire table is bordered
         self.format['multicol'] = False         # True if table contains ANY multicolumns
-        self.format['colwidth'] = None          # If multicolumn table, width of each column
+        self.format['colnum'] = None            # Number of columns in the table
+        self.format['colwidth'] = None          # Width of each col in multicolumn table as coefficient of /textwidth
         self.format['alignment'] = 'left'       # Text alignment of ALL the cells
 
     def append_cell(self, cell):
@@ -59,26 +64,93 @@ class Table(object):
     def end(self):
         '''Perform the final formatting and concatenation, return the LaTeX table to write to
         the file.'''
+        # Append last row if necessary
         if len(self.row_entries) > 0:
             self.rows.append(self.row_entries)
+        # Determine column length
+        if not self.format['multicol']:
+            self.set_columns()
+            for row in self.rows:
+                while len(row) < self.format['colnum']:
+                    row.append(' ')
+            if self.format['border']:
+                self.t['table_spec'] = '{| ' + ' | '.join(['X']*self.format['colnum']) + ' |}\n'
+            else:
+                self.t['table_spec'] = '{' + ' '.join(['X']*self.format['colnum']) + '}\n'
+        # Adjust table if it contains multicolumns
+        if self.format['multicol']:
+            self.multicolumn()
+        # Combine self.rows into string
+        for row in self.rows:
+            if self.format['border']:
+                self.t['table_text'] += ' & '.join(row) + ' \\\\ \\hline \n'
+            else:
+                self.t['table_text'] += ' & '.join(row) + ' \\\\\n'
+        for value in self.t:
+            self.table += self.t[value]
+        return self.table
+    
+    def multicolumn(self):
+        # Find number of columns in the table
+        for row in self.rows:
+            cols = int()
+            for member in row:
+                if type(member) is list:
+                    cols += int(member[0])
+                else:
+                    cols += 1
+            if not self.format['colnum'] or cols > self.format['colnum']:
+                self.format['colnum'] = cols
+        # Set table width
+        self.format['colwidth'] = round(1/self.format['colnum']*self.format['twidth'], 2)
+        if self.format['border']:
+            self.t['table_spec'] = ("{*{" + str(self.format['colnum']) + "}{|p{" + 
+                                     str(self.format['colwidth']) + "\\textwidth}|}}\n")
+        else:
+            self.t['table_spec'] = ("{*{" + str(self.format['colnum']) + "}{p{" + 
+                                    str(self.format['colwidth']) + "\\textwidth}}}\n")
+        # Add multicolumn formatting
+        for i in range(len(self.rows)):
+            new_row = []
+            for member in self.rows[i]:
+                if type(member) is list:
+                    if self.format['border']:
+                        new_row.append('\\multicolumn{' + member[0] + '}{|p{' +
+                                       str(self.format['colwidth'] * int(member[0]))+
+                                       '\\textwidth}|}{'+ member[1] + '}')
+                    else:
+                        new_row.append('\\multicolumn{' + member[0] + '}{p{' +
+                                       str(self.format['colwidth'] * int(member[0]))+
+                                       '\\textwidth}}{'+ member[1] + '}')
+                else:
+                    new_row.append(member)
+            self.rows[i] = new_row
         
     def set_alignment(self, a):
         if a == 'center':
             self.format['alignment'] = 'center'
     
+    def set_columns(self):
+        '''Set columns only for tables without multicolumns.'''
+        for row in self.rows:
+            if self.format['colnum'] == None or len(row) > self.format['colnum']:
+                self.format['colnum'] = len(row)
+    
     def set_width(self, w):
         w = round(float(w)/100, 2)
         if w == 1:
-            self.t['width'] = '{\\textwidth}'
+            self.format['twidth'] = 1
         elif w < .7:
+            self.format['twidth'] = 0.7
             self.t['width'] = '{0.7\\textwidth}'
         else:
+            self.format['twidth'] = w
             self.t['width'] = '{' + str(w) + '\\textwidth}'
         
 class Cell(object):
     def __init__(self, table):
         self.table = table                      # The table this cell will be a part of
-        self.cell = ['', '', '']                # The cell's preceding, body, and ending strings
+        self.cell = ''                          # The cell string
         
         # Row format settings, initialized with the default values
         self.r_format = dict()
@@ -91,17 +163,32 @@ class Cell(object):
         self.c_format['center'] = False         # Center just this cell?
     
     def append(self, text):
-        self.cell[1] += text
+        self.cell += text
         
     def end(self):
         '''Format and concatenate the cell, return it so it can be appended to the table.'''
         self.parse()
-        return ''.join(self.cell)
+        return self.cell
     
     def parse(self):
         '''Parses out any formatting from the cell's content.'''
-        self.cell[1] = re.sub('\{{2}popup\snote\|(.*?)\|(?P<text>.*?)\}{2}', '\g<text>', self.cell[1])
-        print(self.cell)
+        self.cell = re.sub(r'\{{2}popup\snote\|(.*?)\|(?P<text>.*?)\}{2}', r'\g<text>', self.cell)
+        self.cell = re.sub(r'&nbsp;', ' ', self.cell)
+        self.cell = re.sub(r'\{{2}larger\|(?P<text>.*?)\}{2}',
+                              r'\\begin{large}\g<text>\\end{large}', self.cell)
+        self.cell = re.sub(r'{{2}x-smaller\|(?P<text>.*?)\}{2}',
+                              r'\\begin{footnotesize}\g<text>\\end{footnotesize}', self.cell)
+        self.cell = re.sub(r'<s>(?P<text>.*?)</s>', r'\\sout{\g<text>}', self.cell)
+        self.cell = re.sub(r"\s?'''(?P<text>.*?)'''", r'\\textbf{\g<text>}', self.cell)
+        self.cell = re.sub(r"(''|\{{2}u\|)(?P<text>.*?)(''|\}{2})", r'\\textit{\g<text>}', self.cell)
+        self.cell = re.sub(r'<br\s?/?>', r' \\newline ', self.cell)
+        self.cell = self.cell.replace("#", "\#").replace("$", "\$").replace("%", "\%")
+        self.cell = self.cell.replace("_", "\_").replace("^", "\^").replace("~", "\~")
+        self.cell = self.cell.replace("&", "\&").replace("□", "\\Square~").replace("▣", "\\CheckedBox~")
+        if self.c_format['border']:
+            self.cell = '\\fbox{' + self.cell + '}'
+        if self.c_format['colspan']:
+            self.cell = [self.c_format['colspan'], self.cell]
     
     def reset(self):
         '''Resets only the cell details; retains row information.'''

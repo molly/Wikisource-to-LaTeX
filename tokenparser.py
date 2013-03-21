@@ -131,27 +131,35 @@ class Parser(object):
         self.value = self.cell.end() # Get the final text of the cell
         self.table.append_cell(self.value) # Add the cell to the table
         self.cell.reset() # Reset cell values for next time
+        self.value = ''
         
     def format(self):
         # TODO: Add cellpadding/cellspacing?
-        if self.value[0]:
+        if self.value[0]:                               # Table width
             self.table.set_width(self.value[0])
-        if self.value[1]:
+        if self.value[1]:                               # Text alignment
             self.table.set_alignment(self.value[1])
-        if self.value[2]:
+        if self.value[2]:                               # Border
             self.table.format['border'] = True
+            self.table.t['hline'] = '\\hline\n'
+        self.value = ''
 
     def wt_colspan(self):
         self.cell.c_format['colspan'] = self.value
+        self.table.format['multicol'] = True
+        self.value = ''
         
     def wt_colalign(self):
         self.cell.c_format['center'] = True
+        self.value = ''
     
     def wt_boxedcell(self):
         self.cell.c_format['border'] = True
+        self.value = ''
                 
     def newrow(self):
         self.table.append_row()
+        self.value = ''
         
     def cell_contents(self):
         self.cell.append(self.value)
