@@ -32,7 +32,7 @@ class Table(object):
         # Storage for various parts of the table. These are all strings that will later be
         # concatenated in order.
         self.t = OrderedDict()
-        self.t['begin'] = '\\begin{tabularx}'   # Begin table environment
+        self.t['begin'] = '\n\\begin{tabularx}'   # Begin table environment
         self.t['width'] = '{\\textwidth}'         # Width of the full table
         self.t['table_spec'] = ''               # Table column specifications
         self.t['hline'] = ''                    # A beginning /hline in case the table is bordered
@@ -116,11 +116,11 @@ class Table(object):
                 if type(member) is list:
                     if self.format['border']:
                         new_row.append('\\multicolumn{' + member[0] + '}{|p{' +
-                                       str(self.format['colwidth'] * int(member[0]))+
+                                       str(self.format['colwidth'] * 0.8 * int(member[0]))+
                                        '\\textwidth}|}{'+ member[1] + '}')
                     else:
                         new_row.append('\\multicolumn{' + member[0] + '}{p{' +
-                                       str(self.format['colwidth'] * int(member[0]))+
+                                       str(self.format['colwidth'] * 0.8 * int(member[0]))+
                                        '\\textwidth}}{'+ member[1] + '}')
                 else:
                     new_row.append(member)
