@@ -46,14 +46,14 @@ class Parser(object):
         a = re.search('[{]{2}popup\snote\|(.*?)\|', text)
         if a:
             text = text[:a.start()] + text[a.end():]
-        b = re.match('[{]{2}x-smaller\|(?P<text>.*?)[}]{2}', text)
-        if b:
-            text = b.group('text')
-            text = "\\footnotesize{" + text + "}"
+        text = re.sub('[{]{2}x-smaller\|(?P<text>.*?)[}]{2}', '\\footnotesize{\g<text>}', text)
+        text = re.sub('<br\s?/?>', ' \\\\\\\n', text)
         text = text.replace("#", "\#").replace("$", "\$").replace("%", "\%").replace("~", "\~")
         text = text.replace("_", "\_").replace("^", "\^").replace("|", "\|").replace("&", "\&")
+        text = text.replace("°", "{\\degree}").replace("–", "--").replace("—", "---")
+        text = text.replace("|", "{\\textbar}")
         return text
-                
+
     def write(self, text):
         if type(text) is str:
             self.output.write(text)
@@ -114,9 +114,29 @@ class Parser(object):
         #TODO: TFORCED_WHITESPACE
         pass
     
+    # PRE-WIKITABLE FUNCTIONS
+    def taskforce(self):
+        '''Shamelessly hardcoding this in. It's not worth trying to dynamically generate tikz.'''
+        self.value = ('\\vspace{10cm}\n\\begin{tabularx}{0.9\\textwidth}{ p{0.25\\textwidth}' +
+                      ' >{\\centering\\arraybackslash}p{0.4\\textwidth} p{0.25\\textwidth} }\n' +
+                      '\\begin{tikzpicture}\\draw (-.5,0) --(2.5,0);\\draw[ultra thick](-1,.2) ' +
+                      '--(2.5,.2);\\draw (-.5,.4) --(2.5,.4);\\end{tikzpicture} & \\Large{' + 
+                      'VIETNAM TASK FORCE} & \\begin{tikzpicture}\\draw (-1,0) --(2,0);\\draw' + 
+                      '[ultra thick](-1,.2) --(2.5,.2);\\draw (-1,.4) --(2,.4);\\end{tikzpicture}' +
+                      '\n\end{tabularx}')
+
+        
+    def ts(self):
+        '''For the {{ts}} template. This is infrequently used, so I have not generalized it much.'''
+        text = self.reparse.sub(self.value[1])
+        self.value = ('\\setlength{\\fboxrule}{' + self.value[0] + 'px}\n\\begin{center}\n\\fbox{' 
+                      + text + '}\n\\end{center}\n\\setlength{\\fboxrule}{1pt}\n')
+    
     # WIKITABLE FUNCTIONS
     def wikitable(self):
         self.table = wikitable.Table()
+        if self.value[1]:
+            self.table.format['alignment'] = 'center'
         self.value = ''
     
     def e_wikitable(self):
@@ -353,13 +373,13 @@ class Parser(object):
         if self.value in escape: # Precede the punctuation with a backslash
             self.value = "\\" + self.value
         elif self.value == "°": # Replace degree symbol
-            self.value = "\\degree"
+            self.value = "{\\degree}"
         elif self.value == "–": # Replace en dash
             self.value = "--"
-        elif self.value == "—": # Replace em dash
+        elif self.value == "-": # Replace em dash
             self.value = "---"
-        elif self.value == "\|": # Replace pipe
-            self.value = "\\textbar"
+        elif self.value == "|": # Replace pipe
+            self.value = "{\\textbar}"
         elif self.value == "}":
             self.value = ""
         elif self.value == "{":

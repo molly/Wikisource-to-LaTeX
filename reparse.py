@@ -71,11 +71,16 @@ class Reparser(object):
                 t[index] = self.sub(t[index])
             else:
                 t[index] = ' '
-        table = "\\begin{tabularx}{\\textwidth}{*{3}{>{\\centering\\arraybackslash}X}}\n" + " & ".join(t) + " \\\\\n\\end{tabularx} \n"
-        return table
+        runningheader = '\\hfline{' + t[0] + '}{' + t[1] + '}{' + t[2] + '} \\\\\n'
+        return runningheader
     
     def sub(self, text):
         '''Perform common template substitutions'''
-        text = re.sub(r'\{{2}x\-smaller\|(?P<text>.*?)\}{2}', r'\\begin{footnotesize}\g<text>\\end{footnotesize}', text)
-        text = re.sub(r'\{{2}x\-larger\|(?P<text>.*?)\}{2}', r'\\begin{Large}\g<text>\\end{Large}', text)
+        text = re.sub(r'\{{2}larger\|(?P<text>.*?)\}{2}',
+                      r'\\begin{large}\g<text>\\end{large}', text)
+        text = re.sub(r'\{{2}x\-smaller\|(?P<text>.*?)\}{2}',
+                      r'\\begin{footnotesize}\g<text>\\end{footnotesize}', text)
+        text = re.sub(r'\{{2}x\-larger\|(?P<text>.*?)\}{2}',
+                      r'\\begin{Large}\g<text>\\end{Large}', text)
+        text = re.sub(r"'{3}(?P<text>.*?)'{3}", r'\\textbf{\g<text>}', text)
         return text

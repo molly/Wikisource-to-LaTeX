@@ -43,6 +43,9 @@ class Tokenizer(object):
               'TLITEM', # <li> in table
               'TE_LITEM', # </li> in table
               'TFORCED_WHITESPACE', # <br/> in a table
+            # Tokens that must come before the wikitable state
+              'TS', # For the {{ts}} template (infrequently used in this document)
+              'TASKFORCE', # For the "VIETNAM TASK FORCE" logo on the front covers
             # Wikitable state
               'WIKITABLE', # Beginning of table {|
               'E_WIKITABLE', # End of table |}
@@ -171,11 +174,22 @@ class Tokenizer(object):
         r'<br/s?/?>'
         return token
     
+    # Has to come before wikitable state
+    def t_TS(self, token):
+        r'\{\|\{{2}ts\|(?:.*?)\|(?:border\:(?P<border>\d)px\ssolid\sblack;)\}{2}(?:.*?)\n\|(?P<text>.*?)\n\|\}'
+        token.value = token.lexer.lexmatch.group('border', 'text')
+        return token
+    
+    def t_TASKFORCE(self, token):
+        r'(?P<group>\{\|)\salign=center\n\|\{{2}rule\|4em(.*?)\|\}'
+        token.value = token.lexer.lexmatch.group('group')
+        return token
     
     # Wikitable state
     def t_WIKITABLE(self, token):
-        r'\{\|'
+        r'(?P<table>\{\|)\s?(?P<center>align=center)?'
         token.lexer.begin('wikitable')
+        token.value = token.lexer.lexmatch.group('table', 'center')
         return token
     
     def t_wikitable_E_WIKITABLE(self, token):
@@ -186,7 +200,8 @@ class Tokenizer(object):
     def t_wikitable_FORMAT(self, token):
         # TODO: This regex will need to become much more complex as more instances are found
         r'(?:\s?style\=")(?:\s?width\:\s?(?P<width>\d{1,3})%;?\s?)?(?:text\-align\:\s?(?P<textalign>center);?\s?)?(?:")(?:\s?border="(?P<border>\d)"\s?)?(?:\s?cellpadding="(?P<cellpadding>\d)"\s?)?(?:\s?cellspacing="(?P<cellspacing>\d)"\s?)?'
-        token.value = (token.lexer.lexmatch.group('width', 'textalign', 'border', 'cellpadding', 'cellspacing'))
+        token.value = (token.lexer.lexmatch.group('width', 'textalign',
+                                                  'border', 'cellpadding', 'cellspacing'))
         return token
 
     def t_wikitable_NEWROW(self, token):
@@ -314,7 +329,7 @@ class Tokenizer(object):
         return token
     
     def t_RIGHT(self, token):
-        r'[{]{2}right\|'
+        r'[{]{2}(?:block\s)?right\|'
         token.lexer.begin('right')
         return token
     
