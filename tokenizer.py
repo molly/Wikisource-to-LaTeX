@@ -76,6 +76,7 @@ class Tokenizer(object):
               # Aligned state
               'CENTERED', # {{center|...}} or {{c|...}}
               'E_CENTERED', # End of centered state
+              'LEFT', # Left-aligned text
               'RIGHT', # Right-aligned text
               'E_RIGHT', # End of right aligned state
               # General tokens
@@ -305,6 +306,11 @@ class Tokenizer(object):
     def t_centered_E_CENTERED(self, token):
         r'[}]{2}'
         token.lexer.begin('INITIAL')
+        return token
+    
+    def t_LEFT(self, token):
+        r'[{]{2}left\|(?P<text>(?:(?:\{{2}.*?\}{2})|(?:[^\{])*?)+)\}{2}'
+        token.value = token.lexer.lexmatch.group('text')
         return token
     
     def t_RIGHT(self, token):

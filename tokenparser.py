@@ -188,7 +188,6 @@ class Parser(object):
     def runhead(self):
         '''We have to call in the big guns for these ones.'''
         self.value = self.reparse.running_header(self.value)
-        print(self.value)
     
     # HTML TOKENS
     def olist(self):
@@ -255,6 +254,9 @@ class Parser(object):
             self.value = "\\end{center}\n"
         else:
             self.value = "\n\\end{center}\n"
+            
+    def left(self):
+        self.value = self.reparse.left(self.value)
           
     def right(self):
         '''Begin right-aligned text.'''

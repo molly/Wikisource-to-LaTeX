@@ -193,7 +193,7 @@ class Cell(object):
         self.cell = re.sub(r"\s?'''(?P<text>.*?)'''", r'\\textbf{\g<text>}', self.cell)
         self.cell = re.sub(r"(''|\{{2}u\|)(?P<text>.*?)(''|\}{2})", r'\\textit{\g<text>}', self.cell)
         self.cell = re.sub(r'<br\s?/?>', r' \\newline ', self.cell)
-        self.cell = self.cell.replace("#", "\#").replace("$", "\$").replace("%", "\%").replace("|", "\\textbar")
+        self.cell = self.cell.replace("#", "\#").replace("$", "\$").replace("%", "\%").replace("|", "{\\textbar}")
         self.cell = self.cell.replace("_", "\_").replace("^", "\^").replace("~", "\~")
         self.cell = self.cell.replace("&", "\&").replace("□", "\\Square~").replace("▣", "\\CheckedBox~")
         if self.c_format['border']:
