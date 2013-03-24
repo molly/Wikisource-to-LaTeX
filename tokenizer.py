@@ -55,6 +55,7 @@ class Tokenizer(object):
               'WT_COLSPAN', # Number of columns for a cell to span
               'WT_STYLE',
               'E_TCELL', # End of table cell
+              'WT_FILE', # For files in wikitables
               'CELL_CONTENTS', # Everything within a table cell
             # Tokens to check before HTML state  
               'INTERNALLINK',
@@ -95,6 +96,7 @@ class Tokenizer(object):
               'ITALICIZED', # ''...''
               'WLINK', # For links to Wikipedia, Wiktionary, etc.
               'RULE', # For horizontal rules
+              'FILE', # [[File:...]]
               # Very basic tokens
               'ELLIPSES', # ... or ....
               'CHECKBOX_EMPTY',
@@ -227,6 +229,10 @@ class Tokenizer(object):
         r'\s?(?=\s?\|{2}|\n)'
         token.lexer.begin('wikitable')
         token.value = 'endcell'
+        return token
+    
+    def t_tcell_WT_FILE(self, token):
+        r'\[{2}File\:(.*?)\]{2}'
         return token
     
     def t_tcell_CELL_CONTENTS(self, token):
@@ -416,6 +422,10 @@ class Tokenizer(object):
     def t_RULE(self, token):
         r'[{]{2}rule(?:\|height=(?P<height>\d{1,3})px)[}]{2}'
         token.value = token.lexer.lexmatch.group('height')
+        return token
+    
+    def t_FILE(self, token):
+        r'\[{2}File\:(.*?)\]{2}'
         return token
     
     # VERY basic matches that have to be checked last.

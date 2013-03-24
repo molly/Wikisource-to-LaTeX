@@ -32,12 +32,12 @@ class Table(object):
         # Storage for various parts of the table. These are all strings that will later be
         # concatenated in order.
         self.t = OrderedDict()
-        self.t['begin'] = '\n\\begin{tabularx}'   # Begin table environment
-        self.t['width'] = '{\\textwidth}'         # Width of the full table
+        self.t['begin'] = '\\begin{small}\n\\begin{spacing}{0.8}\n\\begin{tabularx}' # Begin table environment
+        self.t['width'] = '{\\textwidth}'       # Width of the full table
         self.t['table_spec'] = ''               # Table column specifications
         self.t['hline'] = ''                    # A beginning /hline in case the table is bordered
         self.t['table_text'] = ''               # self.rows in its final text form
-        self.t['end'] = '\\end{tabularx} \\\\\n'       # End table environment
+        self.t['end'] = '\\end{tabularx}\n\\end{spacing}\n\\end{small}' # End table environment
         
         # Storage that is useful in creating the tables, but don't contain the final strings.
         self.rows = []                          # List containing each row of the table
@@ -73,13 +73,14 @@ class Table(object):
             for row in self.rows:
                 while len(row) < self.format['colnum']:
                     row.append(' ')
-            if self.format['border']:
-                self.t['table_spec'] = '{| ' + ' | '.join(['X']*self.format['colnum']) + ' |}\n'
-            else:
-                self.t['table_spec'] = '{' + ' '.join(['X']*self.format['colnum']) + '}\n'
         # Adjust table if it contains multicolumns
         if self.format['multicol']:
             self.multicolumn()
+        # Add table_spec
+        if self.format['border']:
+                self.t['table_spec'] = '{|*{' + str(self.format['colnum']) + '}{X|}}\n'
+        else:
+                self.t['table_spec'] = '{*{' + str(self.format['colnum']) + '}{X}}\n'
         # Combine self.rows into string
         for row in self.rows:
             if self.format['border']:
@@ -101,27 +102,22 @@ class Table(object):
                     cols += 1
             if not self.format['colnum'] or cols > self.format['colnum']:
                 self.format['colnum'] = cols
-        # Set table width
-        self.format['colwidth'] = round(1/self.format['colnum']*self.format['twidth'], 2)
-        if self.format['border']:
-            self.t['table_spec'] = ("{*{" + str(self.format['colnum']) + "}{|p{" + 
-                                     str(self.format['colwidth']) + "\\textwidth}|}}\n")
-        else:
-            self.t['table_spec'] = ("{*{" + str(self.format['colnum']) + "}{p{" + 
-                                    str(self.format['colwidth']) + "\\textwidth}}}\n")
         # Add multicolumn formatting
         for i in range(len(self.rows)):
             new_row = []
-            for member in self.rows[i]:
+            for ind, member in enumerate(self.rows[i]):
+                arw = '2' if ind==0 else ''
                 if type(member) is list:
                     if self.format['border']:
-                        new_row.append('\\multicolumn{' + member[0] + '}{|p{' +
-                                       str(round(self.format['colwidth'] * int(member[0]), 2))+
-                                       '\\textwidth}|}{'+ member[1] + '}')
+                        new_row.append('\\multicolumn{' + member[0] + '}{|p{\\dimexpr' +
+                                       str(int(member[0])/self.format['colnum']) +
+                                       '\\linewidth-2\\tabcolsep-' + arw + '\\arrayrulewidth}|}{'
+                                       + member[1] + '}')
                     else:
-                        new_row.append('\\multicolumn{' + member[0] + '}{p{' +
-                                       str(round(self.format['colwidth'] * int(member[0]), 2))+
-                                       '\\textwidth}}{'+ member[1] + '}')
+                        new_row.append('\\multicolumn{' + member[0] + '}{p{\\dimexpr' +
+                                       str(int(member[0])/self.format['colnum']) +
+                                       '\\linewidth-2\\tabcolsep-' + arw + '\\arrayrulewidth}}{'
+                                       + member[1] + '}')
                 else:
                     new_row.append(member)
             self.rows[i] = new_row

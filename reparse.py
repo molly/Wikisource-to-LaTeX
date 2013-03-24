@@ -70,8 +70,8 @@ class Reparser(object):
             if t[index] != None:
                 t[index] = self.sub(t[index])
             else:
-                t[index] = ' '
-        runningheader = '\\hfline{' + t[0] + '}{' + t[1] + '}{' + t[2] + '} \\\\\n'
+                t[index] = ''
+        runningheader = '\n\\begin{spacing}{0.3}\n\\hfline{' + t[0] + '}{' + t[1] + '}{' + t[2] + '}\n\\end{spacing}\n'
         return runningheader
     
     def sub(self, text):

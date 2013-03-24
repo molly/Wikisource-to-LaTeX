@@ -180,6 +180,11 @@ class Parser(object):
             self.row_center = False
         self.table.append_row()
         self.value = ''
+    
+    def wt_file(self):
+        # TODO: FILES
+        self.cell.append(' FILE HERE ')
+        self.value = ''
         
     def cell_contents(self):
         self.cell.append(self.value)
@@ -350,6 +355,10 @@ class Parser(object):
     def rule(self):
         '''Horizontal rule.'''
         self.value = "\n\\rule{\\textwidth}{2px} \\\\\n\n"
+        
+    def file(self):
+        # TODO: FILES
+        self.value = " FILE HERE "
     
     # BASIC TOKENS
     def ellipses(self):
