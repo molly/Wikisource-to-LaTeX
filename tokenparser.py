@@ -63,7 +63,7 @@ class Parser(object):
 #===================================================================================================
 # PARSING FUNCTIONS
 #===================================================================================================
-    # TABLE FUNCTIONS
+    # TABLE FUNCTIONS        
     def table(self):
         #TODO: TABLE
         pass
@@ -219,7 +219,7 @@ class Parser(object):
     # HTML TOKENS
     def olist(self):
         '''Begin ordered list.'''
-        self.value = '\\begin{enumerate}'
+        self.value = '\\begin{enumerate}\n'
     
     def e_olist(self):
         '''End ordered list.'''
@@ -227,11 +227,11 @@ class Parser(object):
     
     def litem(self):
         '''Format list item.'''
-        self.value = "\item " + self.value
+        self.value = "\item "
         
     def e_litem(self):
-        '''Do nothing.'''
-        self.value = ""
+        '''End line'''
+        self.value = "\n"
         
     def noinclude(self):
         #TODO: NOINCLUDE
@@ -281,6 +281,9 @@ class Parser(object):
             self.value = "\\end{center}\n"
         else:
             self.value = "\n\\end{center}\n"
+            
+    def a_underlined(self):
+        self.underlined()
             
     def left(self):
         self.value = self.reparse.left(self.value)
@@ -340,7 +343,7 @@ class Parser(object):
         
     def underlined(self):
         '''Replace underlined text with italicized text.'''
-        self.italicized()
+        self.value = "\\uline{" + self.reparse.sub(self.value) + "}"
         
     def bolded(self):
         '''Bold text.'''
@@ -356,7 +359,10 @@ class Parser(object):
     
     def rule(self):
         '''Horizontal rule.'''
-        self.value = "\n\\rule{\\textwidth}{2px} \\\\\n\n"
+        if self.value[1]:
+            self.value = "\n\\rule{\\textwidth}{" + self.value + "px} \\\\\n\n"
+        else:
+            self.value = "\\rule{\\textwidth}{1px} \\\\\n\n"
         
     def file(self):
         # TODO: FILES
@@ -398,7 +404,8 @@ class Parser(object):
             self.value = ""
         elif self.value == "{":
             self.value = ""
-        
+        elif self.value == "✓":
+            self.value = "{\\checked}"
     
     def word(self):
         # TODO: Fix large spaces after abbreviations (i.e., e.g., etc.)

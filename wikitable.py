@@ -51,6 +51,7 @@ class Table(object):
         self.format['colnum'] = None            # Number of columns in the table
         self.format['colwidth'] = None          # Width of each col in multicolumn table as coefficient of /textwidth
         self.format['alignment'] = 'left'       # Text alignment of ALL the cells
+        self.format['contents'] = False         # Is the table a contents table?
 
     def append_cell(self, cell):
         '''Add a fully-formatted cell to the table.'''
@@ -77,10 +78,13 @@ class Table(object):
         if self.format['multicol']:
             self.multicolumn()
         # Add table_spec
-        if self.format['border']:
-                self.t['table_spec'] = '{|*{' + str(self.format['colnum']) + '}{X|}}\n'
+        if not self.format['contents']:
+            if self.format['border']:
+                    self.t['table_spec'] = '{|*{' + str(self.format['colnum']) + '}{X|}}\n'
+            else:
+                    self.t['table_spec'] = '{*{' + str(self.format['colnum']) + '}{X}}\n'
         else:
-                self.t['table_spec'] = '{*{' + str(self.format['colnum']) + '}{X}}\n'
+            self.t['table_spec'] = '{*{' + str(self.format['colnum']) + '}{X}}\n'
         # Combine self.rows into string
         for row in self.rows:
             if self.format['border']:
@@ -173,12 +177,16 @@ class Cell(object):
     def end(self):
         '''Format and concatenate the cell, return it so it can be appended to the table.'''
         self.parse()
+        if len(self.table.rows) == 0 and len(self.table.row_entries) == 0:
+            if self.cell == "I.":
+                self.table.format['contents'] = True
         return self.cell
     
     def parse(self):
         '''Parses out any formatting from the cell's content.'''
         if ' |' in self.cell[0:2]:
             self.cell = self.cell[2:]
+        self.cell = re.sub(r'\[{2}(?:(.*?)\|)?(?P<text>.*?)\]{2}', r'\g<text>', self.cell)
         self.cell = re.sub(r'\{{2}popup\snote\|(.*?)\|(?P<text>.*?)\}{2}', r'\g<text>', self.cell)
         self.cell = re.sub(r'&nbsp;', ' ', self.cell)
         self.cell = re.sub(r'\{{2}larger\|(?P<text>.*?)\}{2}',
@@ -187,13 +195,16 @@ class Cell(object):
                               r'\\begin{footnotesize}\g<text>\\end{footnotesize}', self.cell)
         self.cell = re.sub(r'<s>(?P<text>.*?)</s>', r'\\sout{\g<text>}', self.cell)
         self.cell = re.sub(r"\s?'''(?P<text>.*?)'''", r'\\textbf{\g<text>}', self.cell)
-        self.cell = re.sub(r"(''|\{{2}u\|)(?P<text>.*?)(''|\}{2})", r'\\textit{\g<text>}', self.cell)
+        self.cell = re.sub(r"('')(?P<text>.*?)('')", r'\\textit{\g<text>}',
+                           self.cell)
+        self.cell = re.sub(r'(\{{2}u\||<u>)(?P<text>.*?)(\}{2}|</u>)', r'\\uline{\g<text>}',
+                           self.cell)
         self.cell = re.sub(r'<br\s?/?>', r' \\newline ', self.cell)
         self.cell = self.cell.replace("#", "\#").replace("$", "\$").replace("%", "\%")
         self.cell = self.cell.replace("_", "\_").replace("^", "\^").replace("~", "\~")
         self.cell = self.cell.replace("&", "\&").replace("□", "\\Square~")
         self.cell = self.cell.replace("▣", "\\CheckedBox~").replace("|", "{\\textbar}")
-        self.cell = self.cell.replace("–", "--").replace("—", "---")
+        self.cell = self.cell.replace("–", "--").replace("—", "---").replace("✓", "{\\checked}")
         if self.c_format['border']:
             self.cell = '\\fbox{' + self.cell + '}'
         if self.c_format['colspan']:

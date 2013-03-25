@@ -80,6 +80,7 @@ class Tokenizer(object):
               # Aligned state
               'CENTERED', # {{center|...}} or {{c|...}}
               'E_CENTERED', # End of centered state
+              'A_UNDERLINED', # Underlined text in aligned state
               'LEFT', # Left-aligned text
               'RIGHT', # Right-aligned text
               'E_RIGHT', # End of right aligned state
@@ -330,6 +331,11 @@ class Tokenizer(object):
         token.lexer.begin('INITIAL')
         return token
     
+    def t_centered_right_A_UNDERLINED(self, token):
+        r'<u>(?P<text>.*?)</u>'
+        token.value = token.lexer.lexmatch.group('text')
+        return token
+    
     def t_LEFT(self, token):
         r'[{]{2}left\|(?P<text>(?:(?:\{{2}.*?\}{2})|(?:[^\{])*?)+)\}{2}'
         token.value = token.lexer.lexmatch.group('text')
@@ -421,8 +427,8 @@ class Tokenizer(object):
         return token
     
     def t_RULE(self, token):
-        r'[{]{2}rule(?:\|height=(?P<height>\d{1,3})px)[}]{2}'
-        token.value = token.lexer.lexmatch.group('height')
+        r'[{]{2}(?P<rule>rule)(?:\|height=(?P<height>\d{1,3})px)?[}]{2}'
+        token.value = token.lexer.lexmatch.group('rule','height')
         return token
     
     def t_FILE(self, token):
@@ -448,11 +454,11 @@ class Tokenizer(object):
         return token
     
     def t_PUNCT(self, token):
-        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?/~°–—]"""
+        r"""[!@\#\$\%\^&\*\(\)\-;\+=\[\]\{\}\\\|\:;"',\.\?~°–—✓/]"""
         return token
     
     def t_WORD(self, token):
-        r'[a-zA-Zé]+'
+        r'[a-zA-Zéâ]+'
         return token
     
     def t_NUMBER(self, token):
