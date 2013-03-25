@@ -37,7 +37,7 @@ class Table(object):
         self.t['table_spec'] = ''               # Table column specifications
         self.t['hline'] = ''                    # A beginning /hline in case the table is bordered
         self.t['table_text'] = ''               # self.rows in its final text form
-        self.t['end'] = '\\end{tabularx}\n\\end{spacing}\n\\end{small}' # End table environment
+        self.t['end'] = '\\end{tabularx}\\\\\n\\end{spacing}\n\\end{small}\n' # End table environment
         
         # Storage that is useful in creating the tables, but don't contain the final strings.
         self.rows = []                          # List containing each row of the table
@@ -193,6 +193,7 @@ class Cell(object):
         self.cell = self.cell.replace("_", "\_").replace("^", "\^").replace("~", "\~")
         self.cell = self.cell.replace("&", "\&").replace("□", "\\Square~")
         self.cell = self.cell.replace("▣", "\\CheckedBox~").replace("|", "{\\textbar}")
+        self.cell = self.cell.replace("–", "--").replace("—", "---")
         if self.c_format['border']:
             self.cell = '\\fbox{' + self.cell + '}'
         if self.c_format['colspan']:

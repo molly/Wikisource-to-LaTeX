@@ -97,6 +97,7 @@ class Tokenizer(object):
               'WLINK', # For links to Wikipedia, Wiktionary, etc.
               'RULE', # For horizontal rules
               'FILE', # [[File:...]]
+              'GAP', # {{gap|...}}
               # Very basic tokens
               'ELLIPSES', # ... or ....
               'CHECKBOX_EMPTY',
@@ -205,13 +206,9 @@ class Tokenizer(object):
         token.value = (token.lexer.lexmatch.group('width', 'textalign',
                                                   'border', 'cellpadding', 'cellspacing'))
         return token
-
-    def t_wikitable_NEWROW(self, token):
-        r'(?P<newrow>\n?\|\-(.*?)\n)'
-        return token
     
     def t_wikitable_TCELL(self, token):
-        r'\|{1,2}\s?'
+        r'\|{1,2}'
         token.lexer.begin('tcell')
         return token
     
@@ -229,6 +226,10 @@ class Tokenizer(object):
         r'\s?(?=\s?\|{2}|\n)'
         token.lexer.begin('wikitable')
         token.value = 'endcell'
+        return token
+    
+    def t_wikitable_NEWROW(self, token):
+        r'(?P<newrow>\n?\|\-(.*?)\n)'
         return token
     
     def t_tcell_WT_FILE(self, token):
@@ -415,7 +416,7 @@ class Tokenizer(object):
         return token
     
     def t_WLINK(self, token):
-        r'[[]{2}w(?:ikt)?:(?:.*?)\|(?P<link>.*?)[]]{2}'
+        r'[[]{2}(?:(?:.*?)\|)?(?P<link>.*?)[]]{2}'
         token.value = token.lexer.lexmatch.group('link')
         return token
     
@@ -426,6 +427,11 @@ class Tokenizer(object):
     
     def t_FILE(self, token):
         r'\[{2}File\:(.*?)\]{2}'
+        return token
+    
+    def t_GAP(self, token):
+        r'\{{2}gap\|(?P<width>.*?)\}{2}'
+        token.value = token.lexer.lexmatch.group('width')
         return token
     
     # VERY basic matches that have to be checked last.

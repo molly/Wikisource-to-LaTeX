@@ -48,6 +48,8 @@ class Parser(object):
             text = text[:a.start()] + text[a.end():]
         text = re.sub('[{]{2}x-smaller\|(?P<text>.*?)[}]{2}', '\\footnotesize{\g<text>}', text)
         text = re.sub('<br\s?/?>', ' \\\\\\\n', text)
+        text = re.sub("'''(?P<text>.*?)'''", '\\\\textbf{\g<text>}', text)
+        text = re.sub("''(?P<text>.*?)''", '\\\\textit{\g<text>}', text)
         text = text.replace("#", "\#").replace("$", "\$").replace("%", "\%").replace("~", "\~")
         text = text.replace("_", "\_").replace("^", "\^").replace("|", "\|").replace("&", "\&")
         text = text.replace("°", "{\\degree}").replace("–", "--").replace("—", "---")
@@ -342,11 +344,11 @@ class Parser(object):
         
     def bolded(self):
         '''Bold text.'''
-        self.value = "\\textbf{" + self.value + "}"
+        self.value = "\\textbf{" + self.reparse.sub(self.value) + "}"
     
     def italicized(self):
         '''Italicize text.'''
-        self.value = "\\textit{" + self.value + "}"
+        self.value = "\\textit{" + self.reparse.sub(self.value) + "}"
         
     def wlink(self):
         '''Print only the display text of the wikilink.'''
@@ -359,6 +361,9 @@ class Parser(object):
     def file(self):
         # TODO: FILES
         self.value = " FILE HERE "
+        
+    def gap(self):
+        self.value = "\\hspace*{" + self.value + "}"
     
     # BASIC TOKENS
     def ellipses(self):
@@ -385,7 +390,7 @@ class Parser(object):
             self.value = "{\\degree}"
         elif self.value == "–": # Replace en dash
             self.value = "--"
-        elif self.value == "-": # Replace em dash
+        elif self.value == "—": # Replace em dash
             self.value = "---"
         elif self.value == "|": # Replace pipe
             self.value = "{\\textbar}"
@@ -412,7 +417,10 @@ class Parser(object):
                 self.output.seek(-1, 1)
                 preceding = self.output.read(1)
                 if preceding != "\n" and preceding != "}":
-                    self.value = '\\\\\n'
+                    if self.value == '\n\n' or self.value==' \n\n':
+                        self.value = '\n\n'
+                    else:
+                        self.value = '\\\\\n'
                 else:
                     self.value = ''
             except:

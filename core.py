@@ -46,7 +46,7 @@ if __name__ == "__main__":
         doc.json_to_text()
         
     # Open and read test file
-    with codecs.open(os.curdir + '/input.txt', 'r', 'utf-8') as original:
+    with codecs.open(os.curdir + '/text/0/0.txt', 'r', 'utf-8') as original:
         test_data = original.read()
     original.close()
 
