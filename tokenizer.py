@@ -103,6 +103,7 @@ class Tokenizer(object):
               'RULE', # For horizontal rules
               'FILE', # [[File:...]]
               'GAP', # {{gap|...}}
+              'IMAGE_REMOVED', # {{image removed}}
               # Very basic tokens
               'ELLIPSES', # ... or ....
               'CHECKBOX_EMPTY',
@@ -462,6 +463,11 @@ class Tokenizer(object):
     def t_GAP(self, token):
         r'\{{2}gap\|(?P<width>.*?)\}{2}'
         token.value = token.lexer.lexmatch.group('width')
+        return token
+    
+    def t_IMAGE_REMOVED(self, token):
+        r'\{{2}Image\sremoved\|(?P<descrip>.*?)(?:\|url=\{{2}PDF\|\[(?P<url>.*?)\shere\]\}{2})?\}{2}'
+        token.value = token.lexer.lexmatch.group('descrip', 'url')
         return token
     
     # VERY basic matches that have to be checked last.

@@ -53,9 +53,10 @@ if __name__ == "__main__":
     if not os.path.exists(os.curdir + '/latex'):
         os.mkdir(os.curdir + '/latex')
     #folders = sorted(os.listdir(path=(os.curdir + '/text')), key=int)
-    folders = ['0','1','2']
+    folders = ['3']
     for folder in folders:
-        files = sorted(os.listdir(path=(os.curdir + '/text/' + folder)), key=lambda x: int(x[0]))
+        files = ['0.txt']
+#        files = sorted(os.listdir(path=(os.curdir + '/text/' + folder)), key=lambda x: int(x[0]))
         with codecs.open(os.curdir + '/latex/' + folder + '.tex', 'w+', 'utf-8') as outputfile:
             for file in files:
                 logger.debug("Parsing " + folder + "/" + file + " to " + folder + ".tex.")

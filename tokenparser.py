@@ -379,6 +379,12 @@ class Parser(object):
         
     def gap(self):
         self.value = "\\hspace*{" + self.value + "}"
+        
+    def image_removed(self):
+        self.value = ("\\framebox[\\textwidth][c]{%\n\\parbox{0.9\\textwidth}{%\n\\center{\\large{" 
+                      + "A non-free image has been removed from this page.}}\n\\par\n\\bigskip\n" +
+                      self.value[0] + "\n\\par\n\\bigskip\nThe removed content can be viewed in " +
+                      "the original document \\href{" + self.value[1] + "}{here} (PDF).}\n}\n")
     
     # BASIC TOKENS
     def ellipses(self):
