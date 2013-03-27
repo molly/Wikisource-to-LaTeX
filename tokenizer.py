@@ -46,6 +46,10 @@ class Tokenizer(object):
             # Tokens that must come before the wikitable state
               'TS', # For the {{ts}} template (infrequently used in this document)
               'TASKFORCE', # For the "VIETNAM TASK FORCE" logo on the front covers
+              'TOC', # Table of contents
+              'NEWPAGE', # Start of TOC on a new page
+              'E_TOC', # End table of contents
+              'TOC_TEXT', # Everything between TOC and E_TOC
             # Wikitable state
               'WIKITABLE', # Beginning of table {|
               'E_WIKITABLE', # End of table |}
@@ -117,7 +121,8 @@ class Tokenizer(object):
               ('tcell', 'inclusive'),
               ('html', 'exclusive'),
               ('centered', 'inclusive'),
-              ('right', 'inclusive')
+              ('right', 'inclusive'),
+              ('contents', 'exclusive')
               )
 
 #===================================================================================================
@@ -187,6 +192,24 @@ class Tokenizer(object):
     def t_TASKFORCE(self, token):
         r'(?P<group>\{\|)\salign=center\n\|\{{2}rule\|4em(.*?)\|\}'
         token.value = token.lexer.lexmatch.group('group')
+        return token
+    
+    def t_TOC(self, token):
+        r'(?<!<noinclude>)\{\|(?=(?:.*?)\n(?:\|-?\s?\n)*?\|([A-Za-z0-9]\.))'
+        token.lexer.begin('contents')
+        return token
+    
+    def t_contents_NEWPAGE(self, token):
+        r'<noinclude>\s?\|\}\s?</noinclude>'
+        return token
+    
+    def t_contents_E_TOC(self, token):
+        r'(?<!<noinclude>)\|\}'
+        token.lexer.begin('INITIAL')
+        return token
+    
+    def t_contents_TOC_TEXT(self, token):
+        r'(?:.|\n)'
         return token
     
     # Wikitable state

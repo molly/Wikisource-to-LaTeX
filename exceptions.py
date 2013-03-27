@@ -32,4 +32,9 @@ class NoPagesReturned(APIError):
 class PickleEmpty(APIError):
     '''The pickle file containing the list of pages is empty. Delete the file, then re-run the
     program.'''
-    
+
+class ParseError(W2LError):
+    '''There was an error while parsing the document.'''
+
+class TOCError(ParseError):
+    '''The parser has encountered an incorrectly-formatted outline or table of contents.'''

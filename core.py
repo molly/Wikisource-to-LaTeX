@@ -45,8 +45,9 @@ if __name__ == "__main__":
         logger.debug("Parsing JSON to TXT.")
         doc.json_to_text()
         
-    # Open and read test file
+    # Open and read files
     tokenizer = Tokenizer()
+    parser = Parser()
     if not os.path.exists(os.curdir + '/latex'):
         os.mkdir(os.curdir + '/latex')
     if not os.path.exists(os.curdir + '/latex'):
@@ -56,14 +57,14 @@ if __name__ == "__main__":
     count = 0
     for folder in folders:
         #files = sorted(os.listdir(path=(os.curdir + '/text/' + folder)), key=lambda x: int(x[0]))
-        files = ['0.txt']
-        for file in files:
-            logger.debug("Parsing " + folder + "/" + file + " to LaTeX.")
-            with codecs.open(os.curdir + '/text/' + folder + '/' + file, 'r', 'utf-8') as f:
-                data = f.read()
-                token_list = tokenizer.analyze(data)
-                with codecs.open(os.curdir + '/latex/' + str(count) + '.tex', 'w+', 'utf-8') as outputfile:
-                    parser = Parser(outputfile)
+        with codecs.open(os.curdir + '/latex/' + str(count) + '.tex', 'w+', 'utf-8') as outputfile:
+            files = ['0.txt', '1.txt']
+            for file in files:
+                logger.debug("Parsing " + folder + "/" + file + " to LaTeX.")
+                with codecs.open(os.curdir + '/text/' + folder + '/' + file, 'r', 'utf-8') as f:
+                    data = f.read()
+                    token_list = tokenizer.analyze(data)
+                    parser.begin(outputfile)
                     parser.dispatch(token_list)
-            count += 1
+                count += 1
     logger.debug("Parsing complete.")

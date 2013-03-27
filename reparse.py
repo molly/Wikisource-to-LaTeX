@@ -85,4 +85,10 @@ class Reparser(object):
         text = re.sub(r"'{3}(?P<text>.*?)'{3}", r'\\textbf{\g<text>}', text)
         text = re.sub(r'[[]{2}(?:(?:.*?)\|)?(?P<link>.*?)[]]{2}', r'\g<link>',
                       text)
+        text = re.sub(r'[{]{2}popup\snote\|(.*?)\|(?P<text>.*?)[}]{2}', r'\g<text>', text)
+        text = text.replace('<u>', '\\uline{').replace('</u>', '}').replace('✓', '{\\checked}')
+        text = text.replace("–", "--").replace("—", "---")
+        text = text.replace("#", "\#").replace("$", "\$").replace("%", "\%")
+        text = text.replace("_", "\_").replace("^", "\^").replace("~", "\~")
+        text = text.replace("&", "\&").replace("□", "\\Square~").replace("|", "{\\textbar}")
         return text

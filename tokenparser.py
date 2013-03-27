@@ -21,12 +21,16 @@
 
 import logging, re, wikitable
 from reparse import Reparser
+from toc import TOC
 
 class Parser(object):
-    def __init__(self, outputfile):
+    def __init__(self):
         self.logger = logging.getLogger("W2L")
-        self.output = outputfile
+        self.output = None
         self.reparse = Reparser()
+    
+    def begin(self, outputfile):
+        self.output = outputfile
         
     def dispatch(self, t_list):
         for token in t_list:
@@ -133,6 +137,21 @@ class Parser(object):
         text = self.reparse.sub(self.value[1])
         self.value = ('\\setlength{\\fboxrule}{' + self.value[0] + 'px}\n\\begin{center}\n\\fbox{' 
                       + text + '}\n\\end{center}\n\\setlength{\\fboxrule}{1pt}\n')
+        
+    def toc(self):
+        self.toc = TOC()
+        self.value = ''
+        
+    def newpage(self):
+        self.toc.append('---NEWPAGE---')
+        self.value = ''
+        
+    def e_toc(self):
+        self.value = self.toc.begin()
+        
+    def toc_text(self):
+        self.toc.append(self.value)
+        self.value = ''
     
     # WIKITABLE FUNCTIONS
     def wikitable(self):
