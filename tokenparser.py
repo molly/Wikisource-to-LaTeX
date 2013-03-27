@@ -27,7 +27,7 @@ class Parser(object):
     def __init__(self):
         self.logger = logging.getLogger("W2L")
         self.output = None
-        self.reparse = Reparser()
+        self.reparser = Reparser()
     
     def begin(self, outputfile):
         self.output = outputfile
@@ -44,22 +44,6 @@ class Parser(object):
                 else:
                     self.write(self.value)
                     
-    def nested(self, text):
-        '''Deal with tokens that may not have been caught because they were nested within other
-        tokens (e.g., punctuation in {{center}})'''
-        a = re.search('[{]{2}popup\snote\|(.*?)\|', text)
-        if a:
-            text = text[:a.start()] + text[a.end():]
-        text = re.sub('[{]{2}x-smaller\|(?P<text>.*?)[}]{2}', '\\footnotesize{\g<text>}', text)
-        text = re.sub('<br\s?/?>', ' \\\\\\\n', text)
-        text = re.sub("'''(?P<text>.*?)'''", '\\\\textbf{\g<text>}', text)
-        text = re.sub("''(?P<text>.*?)''", '\\\\textit{\g<text>}', text)
-        text = text.replace("#", "\#").replace("$", "\$").replace("%", "\%").replace("~", "\~")
-        text = text.replace("_", "\_").replace("^", "\^").replace("|", "\|").replace("&", "\&")
-        text = text.replace("°", "{\\degree}").replace("–", "--").replace("—", "---")
-        text = text.replace("|", "{\\textbar}")
-        return text
-
     def write(self, text):
         if type(text) is str:
             self.output.write(text)
@@ -134,7 +118,7 @@ class Parser(object):
         
     def ts(self):
         '''For the {{ts}} template. This is infrequently used, so I have not generalized it much.'''
-        text = self.reparse.sub(self.value[1])
+        text = self.reparser.sub(self.value[1])
         self.value = ('\\setlength{\\fboxrule}{' + self.value[0] + 'px}\n\\begin{center}\n\\fbox{' 
                       + text + '}\n\\end{center}\n\\setlength{\\fboxrule}{1pt}\n')
         
@@ -216,7 +200,7 @@ class Parser(object):
     # PRE-HTML TOKENS
     def internallink(self):
         #TODO: INTERNAL LINK
-        pass
+        self.value = self.reparser.sub(self.value[2])
     
     def pagequality(self):
         if self.output.tell() != 0:
@@ -226,16 +210,16 @@ class Parser(object):
     
     def declassified(self):
         self.value = ("\\begin{spacing}{0.7}\n\\begin{center}\n\\begin{scriptsize}\\textbf" 
-        "{Declassified} per Executive Order 13526, Section 3.3\\\\NND Project Number: NND 63316." 
+        "{Declassified} per Executive Order 13526, Section 3.3\\\\NND Project Number: NND 63316. " 
         "By: NWD Date: 2011\n\\end{scriptsize}\n\\end{center}\n\\end{spacing}\n")
     
     def secret(self):
-        #TODO: SECRET
-        pass
+        self.value = ('\\begin{center}\n\\small{\\uline{TOP SECRET – Sensitive}}\n\\end{center}'
+                      '\n\\vspace{1em}\n')
         
     def runhead(self):
         '''We have to call in the big guns for these ones.'''
-        self.value = self.reparse.running_header(self.value)
+        self.value = self.reparser.running_header(self.value)
     
     # HTML TOKENS
     def olist(self):
@@ -281,7 +265,7 @@ class Parser(object):
         try: 
             self.output.seek(-1, 1)
             preceding = self.output.read(1)
-            if preceding != "\n" and preceding != "}":
+            if preceding != "\n":
                 self.value = '\\\\\n'
             else:
                 self.value = ''
@@ -292,22 +276,26 @@ class Parser(object):
     def centered(self):
         '''Begin centered text.'''
         # TODO: Check that there is a '\\' before and after centered text
+        self.bc = True if self.value[1] else False
         self.value = "\\begin{center}\n"
+        if self.bc:
+            self.value += "\\begin{tabular}{l}\n"
     
     def e_centered(self):
         '''End centered text.'''
         self.output.seek(-1, 1)
         preceding = self.output.read(1)
-        if preceding == "\n":
-            self.value = "\\end{center}\n"
-        else:
-            self.value = "\n\\end{center}\n"
+        if not preceding == "\n":
+            self.value = "\n"
+        if self.bc:
+            self.value += "\\end{tabular}\n"
+        self.value += "\\end{center}\n\n"
             
     def a_underlined(self):
         self.underlined()
             
     def left(self):
-        self.value = self.reparse.left(self.value)
+        self.value = self.reparser.left(self.value)
           
     def right(self):
         '''Begin right-aligned text.'''
@@ -354,25 +342,25 @@ class Parser(object):
         pass
     
     def popup(self):
-        self.value = self.nested(self.value)
+        self.value = self.reparser.sub(self.value)
         
     def size(self):
         '''Adjust the size of the text.'''
-        self.value = ("\\begin{" + self.value[0] + "}\n" + self.nested(self.value[1]) +
+        self.value = ("\\begin{" + self.value[0] + "}\n" + self.reparser.sub(self.value[1]) +
                       " \\\\\n\\end{" + self.value[0] + "}\n")
         pass
         
     def underlined(self):
         '''Replace underlined text with italicized text.'''
-        self.value = "\\uline{" + self.reparse.sub(self.value) + "}"
+        self.value = "\\uline{" + self.reparser.sub(self.value) + "}"
         
     def bolded(self):
         '''Bold text.'''
-        self.value = "\\textbf{" + self.reparse.sub(self.value) + "}"
+        self.value = "\\textbf{" + self.reparser.sub(self.value) + "}"
     
     def italicized(self):
         '''Italicize text.'''
-        self.value = "\\textit{" + self.reparse.sub(self.value) + "}"
+        self.value = "\\textit{" + self.reparser.sub(self.value) + "}"
         
     def wlink(self):
         '''Print only the display text of the wikilink.'''
@@ -381,7 +369,7 @@ class Parser(object):
     def rule(self):
         '''Horizontal rule.'''
         if self.value[1]:
-            self.value = "\n\\rule{\\textwidth}{" + self.value + "px} \\\\\n\n"
+            self.value = ("\n\\rule{\\textwidth}{" + self.value[1] + "px} \\\\\n\n")
         else:
             self.value = "\\rule{\\textwidth}{1px} \\\\\n\n"
         
@@ -444,7 +432,7 @@ class Parser(object):
             try: 
                 self.output.seek(-1, 1)
                 preceding = self.output.read(1)
-                if preceding != "\n" and preceding != "}":
+                if preceding != "\n":
                     if self.value == '\n\n' or self.value==' \n\n':
                         self.value = '\n\n'
                     else:

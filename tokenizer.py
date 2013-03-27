@@ -128,7 +128,7 @@ class Tokenizer(object):
 #===================================================================================================
 # TOKEN DEFINITIONS
 #===================================================================================================
-    # TABLE STATE    
+    # TABLE STATE  
     def t_TABLE(self, token):
         r'<table(?:.*?)>\n'
         token.lexer.begin('table') # Begin table state
@@ -265,8 +265,12 @@ class Tokenizer(object):
         return token
     
     # Tokens to be checked before HTML state
+    def t_FILE(self, token):
+        r'\[{2}File\:(.*?)\]{2}'
+        return token  
+    
     def t_INTERNALLINK(self, token):
-        r'[[]{2}United\sStates(?:.*?)Defense/(?P<subpage>.*?)\#(?P<anchor>.*?)\|(?P<title>.*?)[]]{2}'
+        r'[[]{2}United\sStates(?:.*?)Defense/(?P<subpage>.*?)(?:\#(?P<anchor>.*?))?\|(?P<title>.*?)[]]{2}'
         token.value = (token.lexer.lexmatch.group('subpage','anchor','title'))
         return token 
     
@@ -345,7 +349,8 @@ class Tokenizer(object):
     
     # ALIGNED STATE
     def t_CENTERED(self, token):
-        r'[{]{2}c(?:enter)?\|'
+        r'(?P<center>[{]{2})(?P<block>block\s)?c(?:enter)?\|'
+        token.value = token.lexer.lexmatch.group('center', 'block')
         token.lexer.begin('centered')
         return token
     
@@ -365,7 +370,7 @@ class Tokenizer(object):
         return token
     
     def t_RIGHT(self, token):
-        r'[{]{2}(?:block\s)?right\|'
+        r'[{]{2}(?:block\s)?right\|\d?=?'
         token.lexer.begin('right')
         return token
     
@@ -399,12 +404,12 @@ class Tokenizer(object):
         return token
     
     def t_POPUP(self, token):
-        r'[{]{2}popup\snote\|(.*?)\|(?P<text>.*?)[}]{2}'
+        r'[{]{2}popup\snote\|(.*?)\|\d?=?(?P<text>.*?)[}]{2}'
         token.value = token.lexer.lexmatch.group('text')
         return token
     
     def t_SIZE(self, token):
-        r'[{]{2}(?:(?P<x>[x]{1,4})\-)?(?P<ls>larger|smaller)\|(?P<text>.*?)[}]{2}'
+        r'[{]{2}(?:(?P<x>[x]{1,4})\-)?(?P<ls>larger|smaller)\|(?P<text>(?:(?:\{{2}.*?\}{2})|(?:[^\{])*?)+)[}]{2}'
         x = token.lexer.lexmatch.group('x')
         ls = token.lexer.lexmatch.group('ls')
         if ls == 'smaller':
@@ -452,10 +457,6 @@ class Tokenizer(object):
     def t_RULE(self, token):
         r'[{]{2}(?P<rule>rule)(?:\|height=(?P<height>\d{1,3})px)?[}]{2}'
         token.value = token.lexer.lexmatch.group('rule','height')
-        return token
-    
-    def t_FILE(self, token):
-        r'\[{2}File\:(.*?)\]{2}'
         return token
     
     def t_GAP(self, token):

@@ -53,18 +53,15 @@ if __name__ == "__main__":
     if not os.path.exists(os.curdir + '/latex'):
         os.mkdir(os.curdir + '/latex')
     #folders = sorted(os.listdir(path=(os.curdir + '/text')), key=int)
-    folders = ['1']
-    count = 0
+    folders = ['0','1','2']
     for folder in folders:
-        #files = sorted(os.listdir(path=(os.curdir + '/text/' + folder)), key=lambda x: int(x[0]))
-        with codecs.open(os.curdir + '/latex/' + str(count) + '.tex', 'w+', 'utf-8') as outputfile:
-            files = ['0.txt', '1.txt']
+        files = sorted(os.listdir(path=(os.curdir + '/text/' + folder)), key=lambda x: int(x[0]))
+        with codecs.open(os.curdir + '/latex/' + folder + '.tex', 'w+', 'utf-8') as outputfile:
             for file in files:
-                logger.debug("Parsing " + folder + "/" + file + " to LaTeX.")
+                logger.debug("Parsing " + folder + "/" + file + " to " + folder + ".tex.")
                 with codecs.open(os.curdir + '/text/' + folder + '/' + file, 'r', 'utf-8') as f:
                     data = f.read()
                     token_list = tokenizer.analyze(data)
                     parser.begin(outputfile)
                     parser.dispatch(token_list)
-                count += 1
     logger.debug("Parsing complete.")

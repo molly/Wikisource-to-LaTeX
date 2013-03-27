@@ -71,11 +71,13 @@ class Reparser(object):
                 t[index] = self.sub(t[index])
             else:
                 t[index] = ''
-        runningheader = '\n\\begin{spacing}{0}\n\\hfline{' + t[0] + '}{' + t[1] + '}{' + t[2] + '}\n\\end{spacing}\n'
+        runningheader = ('\n\\vfill\n\\begin{spacing}{0}\n\\hfline{' + t[0] + '}{' + t[1] + '}{'
+                         + t[2] + '}\n\\end{spacing}\n')
         return runningheader
     
     def sub(self, text):
         '''Perform common template substitutions'''
+        text = re.sub(r'\{{2}u\|(?P<text>.*?)\}{2}', r'\\uline{\g<text>}', text)
         text = re.sub(r'\{{2}larger\|(?P<text>.*?)\}{2}',
                       r'\\begin{large}\g<text>\\end{large}', text)
         text = re.sub(r'\{{2}x\-smaller\|(?P<text>.*?)\}{2}',
@@ -85,6 +87,7 @@ class Reparser(object):
         text = re.sub(r"'{3}(?P<text>.*?)'{3}", r'\\textbf{\g<text>}', text)
         text = re.sub(r'[[]{2}(?:(?:.*?)\|)?(?P<link>.*?)[]]{2}', r'\g<link>',
                       text)
+        text = re.sub(r'<br\s?/?>', r'\\\\\n', text)
         text = re.sub(r'[{]{2}popup\snote\|(.*?)\|(?P<text>.*?)[}]{2}', r'\g<text>', text)
         text = text.replace('<u>', '\\uline{').replace('</u>', '}').replace('✓', '{\\checked}')
         text = text.replace("–", "--").replace("—", "---")
