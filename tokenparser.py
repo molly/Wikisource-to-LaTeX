@@ -148,6 +148,8 @@ class Parser(object):
         
     def e_toc(self):
         self.value = self.toc.begin()
+        del self.toc
+        self.toc = TOC()
         
     def toc_text(self):
         self.toc.append(self.value)
