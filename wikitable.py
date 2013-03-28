@@ -186,6 +186,8 @@ class Cell(object):
         '''Parses out any formatting from the cell's content.'''
         if ' |' in self.cell[0:2]:
             self.cell = self.cell[2:]
+        elif '  |' in self.cell [0:3]:
+            self.cell = self.cell[3:]
         self.cell = re.sub(r'\[{2}(?:(.*?)\|)?(?P<text>.*?)\]{2}', r'\g<text>', self.cell)
         self.cell = re.sub(r'\{{2}popup\snote\|(.*?)\|(?P<text>.*?)\}{2}', r'\g<text>', self.cell)
         self.cell = re.sub(r'&nbsp;', ' ', self.cell)

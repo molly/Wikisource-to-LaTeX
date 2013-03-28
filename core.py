@@ -45,24 +45,25 @@ if __name__ == "__main__":
         logger.debug("Parsing JSON to TXT.")
         doc.json_to_text()
         
-    # Open and read files
-    tokenizer = Tokenizer()
-    parser = Parser()
-    if not os.path.exists(os.curdir + '/latex'):
-        os.mkdir(os.curdir + '/latex')
-    if not os.path.exists(os.curdir + '/latex'):
-        os.mkdir(os.curdir + '/latex')
-    #folders = sorted(os.listdir(path=(os.curdir + '/text')), key=int)
-    folders = ['3']
-    for folder in folders:
-        files = ['0.txt']
-#        files = sorted(os.listdir(path=(os.curdir + '/text/' + folder)), key=lambda x: int(x[0]))
-        with codecs.open(os.curdir + '/latex/' + folder + '.tex', 'w+', 'utf-8') as outputfile:
-            for file in files:
-                logger.debug("Parsing " + folder + "/" + file + " to " + folder + ".tex.")
-                with codecs.open(os.curdir + '/text/' + folder + '/' + file, 'r', 'utf-8') as f:
-                    data = f.read()
-                    token_list = tokenizer.analyze(data)
-                    parser.begin(outputfile)
-                    parser.dispatch(token_list)
-    logger.debug("Parsing complete.")
+#    # Open and read files
+#    tokenizer = Tokenizer()
+#    parser = Parser()
+#    if not os.path.exists(os.curdir + '/latex'):
+#        os.mkdir(os.curdir + '/latex')
+#    if not os.path.exists(os.curdir + '/latex'):
+#        os.mkdir(os.curdir + '/latex')
+#    #folders = sorted(os.listdir(path=(os.curdir + '/text')), key=int)
+#    folders = ['0']
+#    for folder in folders:
+#        files = ['0.txt']
+#        #files = sorted(os.listdir(path=(os.curdir + '/text/' + folder)), key=lambda x: int(x[0]))
+#        with codecs.open(os.curdir + '/latex/' + folder + '.tex', 'w+', 'utf-8') as outputfile:
+#            for file in files:
+#                logger.debug("Parsing " + folder + "/" + file + " to " + folder + ".tex.")
+#                with codecs.open(os.curdir + '/text/' + folder + '/' + file, 'r', 'utf-8') as f:
+#                    data = f.read()
+#                    token_list = tokenizer.analyze(data)
+#                    parser.begin(outputfile)
+#                    parser.dispatch(token_list)
+#    #parser.end_matter() # Add endmatter to file (license info, etc.)
+#    logger.debug("Parsing complete.")

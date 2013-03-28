@@ -287,6 +287,8 @@ class Parser(object):
         preceding = self.output.read(1)
         if not preceding == "\n":
             self.value = "\n"
+        else:
+            self.value = ""
         if self.bc:
             self.value += "\\end{tabular}\n"
         self.value += "\\end{center}\n\n"

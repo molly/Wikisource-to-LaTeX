@@ -36,10 +36,11 @@ class Document(object):
     
     def __init__(self):
         # Bare API call, minus the page title
-        self.api_json = "http://en.wikisource.org/w/api.php?format=json&action=query&titles={0}&prop=revisions&rvprop=content"
-        self.api_txt = "http://en.wikisource.org/w/api.php?format=txt&action=query&titles={0}&prop=revisions&rvprop=content"
+        self.api_json = "http://en.wikisource.org/w/api.php?format=json&action=query&titles={0}&prop=revisions&rvprop=content&list=users"
+        self.api_txt = "http://en.wikisource.org/w/api.php?format=txt&action=query&titles={0}&prop=revisions&rvprop=content&list=users"
         self.prefix = parse.quote("United States – Vietnam Relations, 1945–1967: A Study Prepared by the Department of Defense".encode())
         self.pages = OrderedDict()
+        self.users = [] # List of any editor who has contributed to any of the Pentagon Papers pages
         
         self.directory = os.curdir
         self.logger = logging.getLogger("W2L")
@@ -114,22 +115,25 @@ class Document(object):
     
     def json_to_text(self):
         os.mkdir(os.curdir + '/text')
-        folders = sorted(os.listdir(path=(os.curdir + '/raw')), key=int)
+#        folders = sorted(os.listdir(path=(os.curdir + '/raw')), key=int)
+        folders = ['0']
         for folder in folders:
+            print(folder)
             os.mkdir(os.curdir + '/text/' + folder)
             files = sorted(os.listdir(path=(os.curdir + '/raw/' + folder)), key=lambda x: int(x[0]))
             for file in files:
                 with open(os.curdir + '/raw/' + folder + '/' + file, 'r') as f:
                     data = f.read()
-                    json_data = json.loads(data)
-                    pagedict = dict()
-                    for key in json_data["query"]["pages"].keys():
-                        pagedict[json_data["query"]["pages"][key]["title"]] = key
-                    pagelist = sorted(pagedict.keys())
-                    with codecs.open(os.curdir + '/text/' + folder + '/' + file[0] +'.txt', 'w', 'utf-8') as textfile:
-                        for pagename in pagelist:
-                            textfile.write(json_data["query"]["pages"][pagedict[pagename]]['revisions'][0]["*"])
-                            
+                    print(data)
+#                    json_data = json.loads(data)
+#                    pagedict = dict()
+#                    for key in json_data["query"]["pages"].keys():
+#                        pagedict[json_data["query"]["pages"][key]["title"]] = key
+#                    pagelist = sorted(pagedict.keys())
+#                    with codecs.open(os.curdir + '/text/' + folder + '/' + file[0] +'.txt', 'w', 'utf-8') as textfile:
+#                        for pagename in pagelist:
+#                            textfile.write(json_data["query"]["pages"][pagedict[pagename]]['revisions'][0]["*"])
+#                            
         
     def organize(self):
         '''Creates the ordered dictionary containing the filenames and page numbers. If possible,
