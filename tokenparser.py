@@ -44,6 +44,26 @@ class Parser(object):
                 else:
                     self.write(self.value)
                     
+    def end_matter(self, contributors, outputfile):
+        #TODO: Will need to add image attribution, when I get to including images.
+        self.output = outputfile
+        self.logger.debug("Appending license information.")
+        
+        for contributor in contributors:
+            if re.match(r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', contributor):
+                contributors.remove(contributor)
+                anonymous = True
+        if anonymous:
+            contributors.append("anonymous users")
+        
+        begin = ("\n\\newpage\n\\rule{\\textwidth}{1px}\nContent available online at " + 
+                 "http://en.wikisource.org/wiki/Pentagon\_Papers.\n")
+        license = ("\\section*{License} \\\\\nCreative Commons Attribution-Share Alike 3.0 " +
+                   "Unported.\\\\\nhttp://creativecommons.org/licenses/by-sa/3.0/\n")
+        contribs = ("\\section*{Contributors}\n" + ", ".join(contributors) + ".")
+        
+        self.output.write(begin + license + contribs)
+                    
     def write(self, text):
         if type(text) is str:
             self.output.write(text)

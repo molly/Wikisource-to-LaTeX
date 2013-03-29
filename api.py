@@ -36,15 +36,74 @@ class Document(object):
     
     def __init__(self):
         # Bare API call, minus the page title
-        self.api_json = "http://en.wikisource.org/w/api.php?format=json&action=query&titles={0}&prop=revisions&rvprop=content&list=users"
-        self.api_txt = "http://en.wikisource.org/w/api.php?format=txt&action=query&titles={0}&prop=revisions&rvprop=content&list=users"
+        self.api_json = "http://en.wikisource.org/w/api.php?format=json&action=query&titles={0}&prop=revisions&rvprop=content"
+        self.api_txt = "http://en.wikisource.org/w/api.php?format=txt&action=query&titles={0}&prop=revisions&rvprop=content"
+        self.api_attribute = "http://en.wikisource.org/w/api.php?format=json&action=query&prop=revisions&titles={0}&rvprop=user&rvlimit=500"
         self.prefix = parse.quote("United States – Vietnam Relations, 1945–1967: A Study Prepared by the Department of Defense".encode())
         self.pages = OrderedDict()
+        self.page_list = []
         self.users = [] # List of any editor who has contributed to any of the Pentagon Papers pages
         
+        self.recreated = False # Whether the queries were repeated.
         self.directory = os.curdir
         self.logger = logging.getLogger("W2L")
         
+    def attribute(self):
+        # TODO: This is slow as all hell (it took me 6 minutes) and will only get worse as more
+        # pages are added. Try to figure out if there's any way to speed it up.
+        
+        # If the queries haven't been made again and users.txt exists, just use the old list.
+        if not self.recreated and os.path.exists('users.txt'):
+            self.logger.debug("Reading saved list of contributors.")
+            with codecs.open("users.txt", 'r', 'utf-8') as file:
+                users = file.readlines()
+                for user in users:
+                    user = user.rstrip('\n')
+                    self.users.append(user)                    
+        # Can't use the old list because it doesn't exist or new queries were made.
+        else:
+            self.logger.debug("Getting list of contributors.")
+            start_time = time()
+            if not self.page_list:
+                if os.path.exists('eachpage.pkl'):
+                    self.logger.debug("Attribution page list found. Unpickling.")
+                    with open('eachpage.pkl', 'rb') as file:
+                        try:
+                            self.page_list = pickle.load(file)
+                            if len(self.page_list) == 0:
+                                raise PickleEmpty()
+                        except PickleEmpty:
+                            self.logger.exception("Pickle file is empty. Delete the eachpage.pkl "
+                                                  "and pagelist.pkl files and try running the "
+                                                  "program again.")
+                            exit()
+                        except Exception as e:
+                            self.logger.exception("Error occurred when trying to unpickle the "
+                                                  "list of pages for attribution: {}"
+                                                  .format(e.strerror))
+                else:
+                    raise APIError()
+            for page in self.page_list:
+                query = self.api_attribute.format(page)
+                response = json.loads(request.urlopen(query).read().decode('utf-8'))
+                rev_id = list(response["query"]["pages"].keys())[0]
+                user_list = response["query"]["pages"][rev_id]["revisions"]
+                for entry in user_list:
+                    try:
+                        user = entry["user"]
+                    except KeyError:
+                        # This will catch redacted usernames
+                        pass
+                    if user not in self.users:
+                        self.users.append(user)
+            with codecs.open("users.txt", 'w', 'utf-8') as file:
+                for user in self.users:
+                    file.write(user + '\n')
+                    print(user)
+            self.logger.debug("List of users compiled in {} seconds."
+                              .format(round(time()-start_time, 2)))
+        return self.users
+            
     def call(self):
         '''Performs the calls to the API and stores the results as numbered text files. This
         function checks if the /raw directory already exists to avoid querying the API multiple
@@ -68,6 +127,7 @@ class Document(object):
         ...and so on.
         '''
         
+        self.recreated = True
         # Attempt to create /raw folder
         try:
             os.mkdir(self.directory + '/raw')
@@ -87,10 +147,10 @@ class Document(object):
                 with codecs.open(filename, 'w', 'utf-8') as file:
                     text = request.urlopen(call).read().decode('utf-8')
                     file.write(text)
-                file.close()
                 call_count += 1
             pages_count += 1
-        self.logger.debug("Download queries completed in {} seconds.".format(time()-start_time))
+        self.logger.debug("Download queries completed in {} seconds."
+                          .format(round(time()-start_time, 2)))
         
     def form_call(self):
         '''Form the URLs to pull data from the API. The API supports calls of up to fifty pages
@@ -107,33 +167,37 @@ class Document(object):
         api_calls = list()
         for group in pages:
             for number in group:
+                self.page_list.append("Page:" + filename + "/" + str(number))
                 titles += "Page:" + filename + "/" + str(number) + "|"
             titles = titles[:-1]
             api_calls.append(self.api_json.format(titles))
             titles = ""
+        with open('eachpage.pkl', 'wb') as file:
+            try:
+                pickle.dump(self.page_list, file)
+            except Exception as e:
+                self.logger.exception("Exception occurred when trying to pickle the attribution "
+                                      "page list: {}".format(e.strerror))
         return api_calls
     
     def json_to_text(self):
         os.mkdir(os.curdir + '/text')
-#        folders = sorted(os.listdir(path=(os.curdir + '/raw')), key=int)
-        folders = ['0']
+        folders = sorted(os.listdir(path=(os.curdir + '/raw')), key=int)
         for folder in folders:
-            print(folder)
             os.mkdir(os.curdir + '/text/' + folder)
             files = sorted(os.listdir(path=(os.curdir + '/raw/' + folder)), key=lambda x: int(x[0]))
             for file in files:
                 with open(os.curdir + '/raw/' + folder + '/' + file, 'r') as f:
                     data = f.read()
-                    print(data)
-#                    json_data = json.loads(data)
-#                    pagedict = dict()
-#                    for key in json_data["query"]["pages"].keys():
-#                        pagedict[json_data["query"]["pages"][key]["title"]] = key
-#                    pagelist = sorted(pagedict.keys())
-#                    with codecs.open(os.curdir + '/text/' + folder + '/' + file[0] +'.txt', 'w', 'utf-8') as textfile:
-#                        for pagename in pagelist:
-#                            textfile.write(json_data["query"]["pages"][pagedict[pagename]]['revisions'][0]["*"])
-#                            
+                    json_data = json.loads(data)
+                    pagedict = dict()
+                    for key in json_data["query"]["pages"].keys():
+                        pagedict[json_data["query"]["pages"][key]["title"]] = key
+                    pagelist = sorted(pagedict.keys())
+                    with codecs.open(os.curdir + '/text/' + folder + '/' + file[0] +'.txt', 'w', 'utf-8') as textfile:
+                        for pagename in pagelist:
+                            textfile.write(json_data["query"]["pages"][pagedict[pagename]]['revisions'][0]["*"])
+                            
         
     def organize(self):
         '''Creates the ordered dictionary containing the filenames and page numbers. If possible,
@@ -197,7 +261,6 @@ class Document(object):
                 except Exception as e:
                     self.logger.exception("Exception occurred when trying to pickle the page list:"
                                           "{}".format(e.strerror))
-            file.close()
             
         else:
             self.logger.debug("Page list found. Unpickling.")
@@ -213,7 +276,6 @@ class Document(object):
                 except Exception as e:
                     self.logger.exception("Error occurred when trying to unpickle the page list: {}"
                            .format(e.strerror))
-            file.close()
             
         self.logger.debug("{} main pages organized.".format(len(self.pages)))            
         
