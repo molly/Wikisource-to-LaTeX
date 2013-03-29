@@ -313,6 +313,9 @@ class Parser(object):
             self.value += "\\end{tabular}\n"
         self.value += "\\end{center}\n\n"
             
+    def c_right(self):
+        self.value = self.reparser.traverse(self.value)
+            
     def a_underlined(self):
         self.underlined()
             
@@ -407,6 +410,10 @@ class Parser(object):
                       + "A non-free image has been removed from this page.}}\n\\par\n\\bigskip\n" +
                       self.value[0] + "\n\\par\n\\bigskip\nThe removed content can be viewed in " +
                       "the original document \\href{" + self.value[1] + "}{here} (PDF).}\n}\n")
+        
+    def hi(self):
+        # TODO: Implement hi instead of just passing along the text
+        self.value = self.reparser.sub(self.value)
     
     # BASIC TOKENS
     def ellipses(self):

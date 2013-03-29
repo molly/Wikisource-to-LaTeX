@@ -84,6 +84,7 @@ class Tokenizer(object):
               # Aligned state
               'CENTERED', # {{center|...}} or {{c|...}}
               'E_CENTERED', # End of centered state
+              'C_RIGHT', # Right-aligne text in centered state
               'A_UNDERLINED', # Underlined text in aligned state
               'LEFT', # Left-aligned text
               'RIGHT', # Right-aligned text
@@ -104,6 +105,7 @@ class Tokenizer(object):
               'FILE', # [[File:...]]
               'GAP', # {{gap|...}}
               'IMAGE_REMOVED', # {{image removed}}
+              'HI', # Hanging indent
               # Very basic tokens
               'ELLIPSES', # ... or ....
               'CHECKBOX_EMPTY',
@@ -360,6 +362,10 @@ class Tokenizer(object):
         token.lexer.begin('INITIAL')
         return token
     
+    def t_centered_C_RIGHT(self, token):
+        r'[{]{2}(?:block\s)?right\|(?P<text>(?:(?:\{{2}.*?\}{2})|(?:[^\{])*?)+)\}{2,4}'
+        return token
+    
     def t_centered_right_A_UNDERLINED(self, token):
         r'<u>(?P<text>.*?)</u>'
         token.value = token.lexer.lexmatch.group('text')
@@ -370,11 +376,10 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('text')
         return token
     
-    def t_RIGHT(self, token):
+    def t_table_wikitable_tcell_RIGHT(self, token):
         r'[{]{2}(?:block\s)?right\|\d?=?'
         token.lexer.begin('right')
-        return token
-    
+
     def t_right_E_RIGHT(self, token):
         r'[}]{2}'
         token.lexer.begin('INITIAL')
@@ -468,6 +473,11 @@ class Tokenizer(object):
     def t_IMAGE_REMOVED(self, token):
         r'\{{2}Image\sremoved\|(?P<descrip>.*?)(?:\|url=\{{2}PDF\|\[(?P<url>.*?)\shere\]\}{2})?\}{2}'
         token.value = token.lexer.lexmatch.group('descrip', 'url')
+        return token
+    
+    def t_HI(self, token):
+        r'\{{2}hi\|\dem\|(?P<text>(?:(?:\{{2}.*?\}{2})|(?:[^\{])*?)+)\}{2}'
+        token.value = token.lexer.lexmatch.group('text')
         return token
     
     # VERY basic matches that have to be checked last.

@@ -19,11 +19,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
+from exceptions import ParseError
+import logging, re, util
 
 class Reparser(object):
     def __init__(self):
-        pass
+        self.logger = logging.getLogger("W2L")
     
     def left(self, text):
         offset = None
@@ -35,6 +36,21 @@ class Reparser(object):
             text = self.sub(text)
             text = "\\hspace*{" + offset + "em}" + text + " \\\\\n"
         return text
+    
+    def traverse(self, text):
+        l = util.findall(text, "{{")
+        r = util.findall(text, "}}")
+        if len(l) != len(r):
+            raise ParseError("Mismatched number of open/close brackets: " + text)
+        print(text)
+        while True:
+            try:
+                print(text[l[-1]:r[0]+2])
+                print(text[:l[-1]] + text[r[0]+2:])
+                l.pop()
+                r.pop(0)
+            except:
+                break
     
     def running_header(self, text):
         '''Parse out the insides of a {{rh}} template into a LaTeX table.'''
