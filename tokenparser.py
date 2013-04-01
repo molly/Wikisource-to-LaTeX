@@ -299,18 +299,18 @@ class Parser(object):
         self.bc = True if self.value[1] else False
         self.value = "\\begin{center}\n"
         if self.bc:
-            self.value += "\\begin{tabular}{l}\n"
+            self.value += "\\begin{minipage}{.5\\textwidth}\n"
     
     def e_centered(self):
         '''End centered text.'''
         self.output.seek(-1, 1)
         preceding = self.output.read(1)
-        if not preceding == "\n":
+        if preceding != "\n":
             self.value = "\n"
         else:
             self.value = ""
         if self.bc:
-            self.value += "\\end{tabular}\n"
+            self.value += "\\end{minipage}\n"
         self.value += "\\end{center}\n\n"
             
     def c_right(self):
@@ -406,10 +406,10 @@ class Parser(object):
         self.value = "\\hspace*{" + self.value + "}"
         
     def image_removed(self):
-        self.value = ("\\framebox[\\textwidth][c]{%\n\\parbox{0.9\\textwidth}{%\n\\center{\\large{" 
+        self.value = ("\\vfill\n\\framebox[\\textwidth][c]{%\n\\parbox{0.9\\textwidth}{%\n\\vspace{15em}\n\\center{\\large{" 
                       + "A non-free image has been removed from this page.}}\n\\par\n\\bigskip\n" +
                       self.value[0] + "\n\\par\n\\bigskip\nThe removed content can be viewed in " +
-                      "the original document \\href{" + self.value[1] + "}{here} (PDF).}\n}\n")
+                      "the original document \\href{" + self.value[1] + "}{here} (PDF).\n\\vspace{15em}}}\n\\vfill\n")
         
     def hi(self):
         # TODO: Implement hi instead of just passing along the text

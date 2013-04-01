@@ -25,6 +25,39 @@ import logging, re, util
 class Reparser(object):
     def __init__(self):
         self.logger = logging.getLogger("W2L")
+        
+    def careful_sub(self, text, traverse=False):
+        # Currently ignoring {{popup note}} and {{hi}}
+        '''Only substitute templates -- passing substituted text through this will not change it.'''
+        text = re.sub(r'\{{2}hi\|\dem\|(?P<text>.*?)\}{2}', r'\g<text>', text)
+        text = re.sub(r'\{{2}u\|(?P<text>.*?)\}{2}', r'\\uline{\g<text>}', text)
+        text = re.sub(r'\{{2}larger\|(?P<text>.*?)\}{2}',
+                      r'\\begin{large}\g<text>\\end{large}', text)
+        text = re.sub(r'\{{2}x\-smaller\|(?P<text>.*?)\}{2}',
+                      r'\\begin{footnotesize}\g<text>\\end{footnotesize}', text)
+        text = re.sub(r'\{{2}x\-larger\|(?P<text>.*?)\}{2}',
+                      r'\\begin{Large}\g<text>\\end{Large}', text)
+        text = re.sub(r"'{3}(?P<text>.*?)'{3}", r'\\textbf{\g<text>}', text)
+        text = re.sub(r'[[]{2}(?:(?:.*?)\|)?(?P<link>.*?)[]]{2}', r'\g<link>',
+                      text)
+        text = re.sub(r'<br\s?/?>', r'\\\\\n', text)
+        text = re.sub(r'[{]{2}popup\snote\|(.*?)\|(?P<text>.*?)[}]{2}', r'\g<text>', text)
+        text = re.sub(r'\{{2}(?:block\s)?right\|(?P<text>.*?)\}{2}',
+                      r'\\begin{flushright}\g<text>\\end{flushright}', text)
+        text = text.replace('<u>', '\\uline{').replace('</u>', '}').replace('✓', '{\\checked}')
+        text = text.replace("–", "--").replace("—", "---")
+        text = text.replace("□", "\\Square~").replace("|", "{\\textbar}")
+        if traverse:
+            text = text.replace("{", "`").replace("}", "@@")
+            text = text.replace("\n", "~")
+        return text
+        
+    def final_sub(self, text):
+        '''This can only be run once on text, or it will substitute substitute chars.'''
+        text = text.replace("#", "\#").replace("$", "\$").replace("%", "\%")
+        text = text.replace("_", "\_").replace("^", "\^").replace("~", "\~")
+        text = text.replace("&", "\&")
+        return text
     
     def left(self, text):
         offset = None
@@ -38,20 +71,21 @@ class Reparser(object):
         return text
     
     def traverse(self, text):
-        l = util.findall(text, "{{")
-        r = util.findall(text, "}}")
-        if len(l) != len(r):
-            raise ParseError("Mismatched number of open/close brackets: " + text)
-        print(text)
         while True:
-            try:
-                print(text[l[-1]:r[0]+2])
-                print(text[:l[-1]] + text[r[0]+2:])
-                l.pop()
-                r.pop(0)
-            except:
+            l = util.findall(text, "{{")
+            r = util.findall(text, "}}")
+            if len(l) != len(r):
+                raise ParseError("Mismatched number of open/close brackets: " + text)
+            elif len(l) == 0:
                 break
-    
+            else:
+                temp = self.careful_sub(text[l[-1]:r[0]+2], True)
+                text = text.replace(text[l[-1]:r[0]+2], temp)
+        text = text.replace("~", "\n")
+        text = self.final_sub(text)
+        text = text.replace("`", "{").replace("@@", "}")
+        return text
+            
     def running_header(self, text):
         '''Parse out the insides of a {{rh}} template into a LaTeX table.'''
         # Remove {{rh and closing }}
@@ -87,27 +121,15 @@ class Reparser(object):
                 t[index] = self.sub(t[index])
             else:
                 t[index] = ''
-        runningheader = ('\n\\vfill\n\\begin{spacing}{0}\n\\hfline{' + t[0] + '}{' + t[1] + '}{'
+        runningheader = ''
+        if "TOP SECRET" in t[2]:
+            runningheader = '\n\\vfill'
+        runningheader += ('\n\\begin{spacing}{0}\n\\hfline{' + t[0] + '}{' + t[1] + '}{'
                          + t[2] + '}\n\\end{spacing}\n')
         return runningheader
     
     def sub(self, text):
-        '''Perform common template substitutions'''
-        text = re.sub(r'\{{2}u\|(?P<text>.*?)\}{2}', r'\\uline{\g<text>}', text)
-        text = re.sub(r'\{{2}larger\|(?P<text>.*?)\}{2}',
-                      r'\\begin{large}\g<text>\\end{large}', text)
-        text = re.sub(r'\{{2}x\-smaller\|(?P<text>.*?)\}{2}',
-                      r'\\begin{footnotesize}\g<text>\\end{footnotesize}', text)
-        text = re.sub(r'\{{2}x\-larger\|(?P<text>.*?)\}{2}',
-                      r'\\begin{Large}\g<text>\\end{Large}', text)
-        text = re.sub(r"'{3}(?P<text>.*?)'{3}", r'\\textbf{\g<text>}', text)
-        text = re.sub(r'[[]{2}(?:(?:.*?)\|)?(?P<link>.*?)[]]{2}', r'\g<link>',
-                      text)
-        text = re.sub(r'<br\s?/?>', r'\\\\\n', text)
-        text = re.sub(r'[{]{2}popup\snote\|(.*?)\|(?P<text>.*?)[}]{2}', r'\g<text>', text)
-        text = text.replace('<u>', '\\uline{').replace('</u>', '}').replace('✓', '{\\checked}')
-        text = text.replace("–", "--").replace("—", "---")
-        text = text.replace("#", "\#").replace("$", "\$").replace("%", "\%")
-        text = text.replace("_", "\_").replace("^", "\^").replace("~", "\~")
-        text = text.replace("&", "\&").replace("□", "\\Square~").replace("|", "{\\textbar}")
+        '''Perform common substitutions'''
+        text = self.careful_sub(text)
+        text = self.final_sub(text)
         return text
