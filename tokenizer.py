@@ -376,9 +376,10 @@ class Tokenizer(object):
         token.value = token.lexer.lexmatch.group('text')
         return token
     
-    def t_table_wikitable_tcell_RIGHT(self, token):
+    def t_INITIAL_RIGHT(self, token):
         r'[{]{2}(?:block\s)?right\|\d?=?'
         token.lexer.begin('right')
+        return token
 
     def t_right_E_RIGHT(self, token):
         r'[}]{2}'
@@ -386,17 +387,17 @@ class Tokenizer(object):
         return token
     
     # INITIAL STATE
-    def t_PSPACE(self, token):
-        r'[{]{2}nop[}]{2}'
-        return token
-    
     def t_CINDENT(self, token):
         r'(?<=<noinclude>):(?=</noinclude>)'
         return token
     
     def t_INDENT(self, token):
-        r'(?:\n|\r)+(?P<colons>\:+)'
+        r'(?<=(>|\n|\r))+(?P<colons>\:+)'
         token.value = token.lexer.lexmatch.group('colons')
+        return token
+    
+    def t_PSPACE(self, token):
+        r'[{]{2}nop[}]{2}'
         return token
     
     def t_PAGENUM(self, token):

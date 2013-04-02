@@ -57,25 +57,29 @@ class TOC(object):
         self.props += '\ListProperties(Space=-2.3mm,Space*=-2.3mm,Hang=true,Progressive*=2em,'
         num_levels = len(self.levels)
         for level in range(1,num_levels+1):
-            val = self.levels[str(level)]
-            if re.match(r'[I]', val):
-                self.props += 'Numbers' + str(level) + '=R,'
-                if level > 1:
-                    self.props += 'Hide' + str(level) + '=' + str(level-1) + ','
-            elif re.match(r'[A]', val):
-                self.props += 'Numbers' + str(level) + '=L,'
-                if level > 1:
-                    self.props += 'Hide' + str(level) + '=' + str(level-1) + ','
-            elif re.match(r'[1]+', val):
-                if level > 1:
-                    self.props += 'Hide' + str(level) + '=' + str(level-1) + ','
-            elif re.match(r'[a]', val):
-                self.props += 'Numbers' + str(level) + '=l,'
-                if level > 1:
-                    self.props += 'Hide' + str(level) + '=' + str(level-1) + ','
+            try:
+                val = self.levels[str(level)]
+            except:
+                print(self.levels)
             else:
-                if level > 1:
-                    self.props += 'Hide' + str(level) + '=' + str(level) + ','
+                if re.match(r'[I]', val):
+                    self.props += 'Numbers' + str(level) + '=R,'
+                    if level > 1:
+                        self.props += 'Hide' + str(level) + '=' + str(level-1) + ','
+                elif re.match(r'[A]', val):
+                    self.props += 'Numbers' + str(level) + '=L,'
+                    if level > 1:
+                        self.props += 'Hide' + str(level) + '=' + str(level-1) + ','
+                elif re.match(r'[1]+', val):
+                    if level > 1:
+                        self.props += 'Hide' + str(level) + '=' + str(level-1) + ','
+                elif re.match(r'[a]', val):
+                    self.props += 'Numbers' + str(level) + '=l,'
+                    if level > 1:
+                        self.props += 'Hide' + str(level) + '=' + str(level-1) + ','
+                else:
+                    if level > 1:
+                        self.props += 'Hide' + str(level) + '=' + str(level) + ','
         self.props = self.props[:-1] + ')\n'
         
     def newpage(self, line):
@@ -86,25 +90,26 @@ class TOC(object):
         
     def parse(self):
         for line in self.lines:
-            if "---NEWPAGE---" in line:
-                line = self.newpage(line)
-            level = 0
-            ind = 0
-            while line[ind] == "|":
-                level += 1
-                ind += 1
-            if str(level) not in self.levels:
-                self.levels[str(level)] = line[ind]
-            line = line[ind:]
-            r = re.match(r'([A-Za-z0-9]{1,4}\.\s?\|)?(?:colspan="\d"\|)?(?P<text>.*)', line, flags=re.MULTILINE)
-            if r != None:
-                line = r.group('text')
-            else:
-                raise TOCError
-            line = self.reparser.sub(line)
-            line = line.replace("{\\textbar}", " ")
-            self.latex += "@"*level + " " + line + "\n"
-            if self.is_newpage:
-                self.latex += "\\newpage\n"
-                self.latex += self.declassified
-                self.is_newpage = False
+            if len(line) > 0:
+                if "---NEWPAGE---" in line:
+                    line = self.newpage(line)
+                level = 0
+                ind = 0
+                while line[ind] == "|":
+                    level += 1
+                    ind += 1
+                if str(level) not in self.levels:
+                    self.levels[str(level)] = line[ind]
+                line = line[ind:]
+                r = re.match(r'([A-Za-z0-9]{1,4}\.\s?\|)?(?:colspan="\d"\|)?(?P<text>.*)', line, flags=re.MULTILINE)
+                if r != None:
+                    line = r.group('text')
+                else:
+                    raise TOCError
+                line = self.reparser.sub(line)
+                line = line.replace("{\\textbar}", " ")
+                self.latex += "@"*level + " " + line + "\n"
+                if self.is_newpage:
+                    self.latex += "\\newpage\n"
+                    self.latex += self.declassified
+                    self.is_newpage = False

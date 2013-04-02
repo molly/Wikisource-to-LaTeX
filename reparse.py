@@ -74,8 +74,9 @@ class Reparser(object):
         while True:
             l = util.findall(text, "{{")
             r = util.findall(text, "}}")
-            if len(l) != len(r):
-                raise ParseError("Mismatched number of open/close brackets: " + text)
+            if len(l) < len(r):
+                text = text[:-2]
+                r.pop()
             elif len(l) == 0:
                 break
             else:

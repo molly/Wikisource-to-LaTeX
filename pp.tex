@@ -11,6 +11,13 @@
 \makebox[\textwidth][s]{\rlap{#1}\hfill#2\hfill\llap{\footnotesize{#3}}}%
 \par\medskip}
 
+\newenvironment{blockquote}[1]{%
+  \par%
+  \medskip
+  \leftskip=#1\rightskip=0em%
+  \noindent\ignorespaces}{%
+  \par\medskip}
+
 \begin{document}
 
 \input{1.tex}

@@ -56,7 +56,7 @@ if __name__ == "__main__":
     folders = ['3']
     for folder in folders:
         #files = sorted(os.listdir(path=(os.curdir + '/text/' + folder)), key=lambda x: int(x[0]))
-        files = ['0.txt']
+        files = ['0.txt','1.txt']
         with codecs.open(os.curdir + '/latex/' + folder + '.tex', 'w+', 'utf-8') as outputfile:
             last_open = os.curdir + '/latex/' + folder + '.tex'
             for file in files:

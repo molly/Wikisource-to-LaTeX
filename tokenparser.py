@@ -28,6 +28,7 @@ class Parser(object):
         self.logger = logging.getLogger("W2L")
         self.output = None
         self.reparser = Reparser()
+        self.indented = False
     
     def begin(self, outputfile):
         self.output = outputfile
@@ -39,8 +40,9 @@ class Parser(object):
                 command = 'self.{0}()'.format(token[0].lower())
                 try:
                     exec(command)
-                except AttributeError as e:
-                    self.logger.debug("No function: {}.".format(e))
+                except:
+                    self.logger.exception("Unable to run command " + command);
+                    break;
                 else:
                     self.write(self.value)
                     
@@ -143,20 +145,20 @@ class Parser(object):
                       + text + '}\n\\end{center}\n\\setlength{\\fboxrule}{1pt}\n')
         
     def toc(self):
-        self.toc = TOC()
+        self.contents = TOC()
         self.value = ''
         
     def newpage(self):
-        self.toc.append('---NEWPAGE---')
+        self.contents.append('---NEWPAGE---')
         self.value = ''
         
     def e_toc(self):
-        self.value = self.toc.begin()
-        del self.toc
-        self.toc = TOC()
+        self.value = self.contents.begin()
+        del self.contents
+        self.contents = TOC()
         
     def toc_text(self):
-        self.toc.append(self.value)
+        self.contents.append(self.value)
         self.value = ''
     
     # WIKITABLE FUNCTIONS
@@ -355,8 +357,10 @@ class Parser(object):
         pass
     
     def indent(self):
-        # TODO: BLOCK INDENT
-        pass
+        self.indented = True
+        coeff = self.value.count(":")
+        indent_width = 2 * coeff
+        self.value = "\\begin{blockquote}{" + str(indent_width) + "em}\n"
     
     def pagenum(self):
         # TODO: PAGE NUMBER
@@ -464,17 +468,21 @@ class Parser(object):
     def whitespace(self):
         '''Replace newlines with '\\', replace tabs with spaces, leave spaces the same.''' 
         if '\r' in self.value or '\n' in self.value:
-            try: 
-                self.output.seek(-1, 1)
-                preceding = self.output.read(1)
-                if preceding != "\n":
-                    if self.value == '\n\n' or self.value==' \n\n':
-                        self.value = '\n\n'
+            if self.indented:
+                self.value = "\n\\end{blockquote}\n"
+                self.indented = False
+            else:
+                try: 
+                    self.output.seek(-1, 1)
+                    preceding = self.output.read(1)
+                    if preceding != "\n":
+                        if self.value == '\n\n' or self.value==' \n\n':
+                            self.value = '\n\n'
+                        else:
+                            self.value = '\\\\\n'
                     else:
-                        self.value = '\\\\\n'
-                else:
-                    self.value = ''
-            except:
-                pass
+                        self.value = ''
+                except:
+                    pass
         else:
             self.value = ' '
