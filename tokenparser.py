@@ -353,8 +353,7 @@ class Parser(object):
             pass
         
     def cindent(self):
-        # TODO: CONTINUE INDENT FROM PREVIOUS PAGE
-        pass
+        self.indent()
     
     def indent(self):
         self.indented = True
@@ -423,9 +422,9 @@ class Parser(object):
     def ellipses(self):
         '''Convert to proper ellipsis formatting.'''
         if self.value == "...":
-            self.value = "\\ldots"
+            self.value = "{\\ldots}"
         else:
-            self.value = "\\ldots."
+            self.value = "{\\ldots}."
             
     def checkbox_empty(self):
         self.value = "\\Square~"

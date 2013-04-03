@@ -2,7 +2,8 @@
 \pagestyle{empty}
 \usepackage[utf8]{inputenc}
 \usepackage[margin=4cm]{geometry}
-\usepackage{easylist, hyperref, libertine, parskip, setspace, tabularx, textcomp, tikz, ulem, wasysym}
+\usepackage{hyperref, libertine, parskip, setspace, tabularx, textcomp, tikz, ulem, wasysym}
+\usepackage[at]{easylist}
 \usepackage[T1]{fontenc}
 \setlength\parindent{0pt}
 
@@ -13,13 +14,18 @@
 
 \newenvironment{blockquote}[1]{%
   \par%
-  \medskip
   \leftskip=#1\rightskip=0em%
   \noindent\ignorespaces}{%
-  \par\medskip}
+  \par}
 
 \begin{document}
 
+\input{0.tex}
+\newpage
 \input{1.tex}
+\newpage
+\input{2.tex}
+\newpage
+\input{3.tex}
 
 \end{document}

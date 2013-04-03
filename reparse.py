@@ -122,11 +122,10 @@ class Reparser(object):
                 t[index] = self.sub(t[index])
             else:
                 t[index] = ''
-        runningheader = ''
+        runningheader = ('\n\\hfline{' + t[0] + '}{' + t[1] + '}{'
+                         + t[2] + '}\n')
         if "TOP SECRET" in t[2]:
-            runningheader = '\n\\vfill'
-        runningheader += ('\n\\begin{spacing}{0}\n\\hfline{' + t[0] + '}{' + t[1] + '}{'
-                         + t[2] + '}\n\\end{spacing}\n')
+            runningheader = '\n\\vfill\n\\begin{spacing}{0}' + runningheader + '\\end{spacing}\n'
         return runningheader
     
     def sub(self, text):

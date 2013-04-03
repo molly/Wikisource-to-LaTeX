@@ -198,7 +198,7 @@ class Tokenizer(object):
         return token
     
     def t_TOC(self, token):
-        r'(?<!<noinclude>)\{\|(?=(?:.*?)\n(?:\|-?\s?\n)*?\|([A-Za-z0-9]\.))'
+        r'\{\|(?:.*?)\n(?=(?:\|\-\n)?(?:\|\n)*(?:\|([A-Za-z0-9]\.|\{{2}u\|Page\}{2})))'
         token.lexer.begin('contents')
         return token
     

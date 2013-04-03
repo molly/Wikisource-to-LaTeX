@@ -33,6 +33,7 @@ class TOC(object):
         self.props = ''
         self.latex = ''
         self.is_newpage = False
+        self.is_page_list = False
         self.declassified = ("\\begin{spacing}{0.7}\n\\begin{center}\n\\begin{scriptsize}\\textbf" 
         "{Declassified} per Executive Order 13526, Section 3.3\\\\NND Project Number: NND 63316." 
         "By: NWD Date: 2011\n\\vspace{2em}\n\\end{scriptsize}\n\\end{center}\n\\end{spacing}\n")
@@ -44,6 +45,8 @@ class TOC(object):
         ind = self.text.find("|")
         self.text = self.text[ind:]
         self.lines = self.text.replace('\n','').split("|-")
+        if len(self.lines[0]) == 0:
+            self.lines.pop(0)
         self.parse()
         self.make_props()
         return self.end()
@@ -54,6 +57,9 @@ class TOC(object):
         return latex
         
     def make_props(self):
+        if self.is_page_list:
+            page_key = sorted(list(self.levels.keys()))[-1]
+            del self.levels[str(page_key)]
         self.props += '\ListProperties(Space=-2.3mm,Space*=-2.3mm,Hang=true,Progressive*=2em,'
         num_levels = len(self.levels)
         for level in range(1,num_levels+1):
@@ -61,6 +67,8 @@ class TOC(object):
                 val = self.levels[str(level)]
             except:
                 print(self.levels)
+                print(val, level)
+                print(self.lines)
             else:
                 if re.match(r'[I]', val):
                     self.props += 'Numbers' + str(level) + '=R,'
@@ -89,6 +97,8 @@ class TOC(object):
         return list_text
         
     def parse(self):
+        if "Page" in self.lines[0]:
+            self.is_page_list = True
         for line in self.lines:
             if len(line) > 0:
                 if "---NEWPAGE---" in line:
@@ -108,8 +118,20 @@ class TOC(object):
                     raise TOCError
                 line = self.reparser.sub(line)
                 line = line.replace("{\\textbar}", " ")
-                self.latex += "@"*level + " " + line + "\n"
-                if self.is_newpage:
-                    self.latex += "\\newpage\n"
-                    self.latex += self.declassified
-                    self.is_newpage = False
+                if self.is_page_list:
+                    if r'\uline{Page}' in line:
+                        self.latex += "\\hfill " + line + "\n"
+                    else:
+                        line = re.sub('(?P<num>[A-Z]-\d{1,3})', '\\hfill \g<num>', line)
+                        self.latex += "@"*level + " " + line + "\n"
+                        if self.is_newpage:
+                            self.latex += "\\newpage\n"
+                            self.latex += self.declassified
+                            self.is_newpage = False
+                else:
+                    self.latex += "@"*level + " " + line + "\n"
+                    if self.is_newpage:
+                        self.latex += "\\newpage\n"
+                        self.latex += self.declassified
+                        self.is_newpage = False
+        print(self.latex)
