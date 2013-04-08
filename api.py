@@ -43,6 +43,7 @@ class Document(object):
         self.pages = OrderedDict()
         self.page_list = []
         self.users = [] # List of any editor who has contributed to any of the Pentagon Papers pages
+        self.num_pages = 0
         
         self.recreated = False # Whether the queries were repeated.
         self.directory = os.curdir
@@ -99,7 +100,6 @@ class Document(object):
             with codecs.open("users.txt", 'w', 'utf-8') as file:
                 for user in self.users:
                     file.write(user + '\n')
-                    print(user)
             self.logger.debug("List of users compiled in {} seconds."
                               .format(round(time()-start_time, 2)))
         return self.users
@@ -277,7 +277,9 @@ class Document(object):
                     self.logger.exception("Error occurred when trying to unpickle the page list: {}"
                            .format(e.strerror))
             
-        self.logger.debug("{} main pages organized.".format(len(self.pages)))            
+        self.logger.debug("{} main pages organized.".format(len(self.pages)))
+        for page in list(self.pages.items()):
+            self.num_pages += len(page[1]) - 1
         
     def split_calls(self,pagelist):
         '''The API only accepts 50 calls at a time, so this function splits the lists of pages

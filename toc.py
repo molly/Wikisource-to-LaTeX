@@ -19,13 +19,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
+import logging, re
 from reparse import Reparser
 from exceptions import TOCError
 
 class TOC(object):
     def __init__(self):
         self.reparser = Reparser()
+        self.logger = logging.getLogger("W2L")
         
         self.text = ''          # Raw wikitext
         self.lines = []
@@ -66,9 +67,11 @@ class TOC(object):
             try:
                 val = self.levels[str(level)]
             except:
-                print(self.levels)
-                print(val, level)
-                print(self.lines)
+                pass
+                self.logger.exception("Improperly-formatted table.")
+#                print(self.levels)
+#                print(val, level)
+#                print(self.lines)
             else:
                 if re.match(r'[I]', val):
                     self.props += 'Numbers' + str(level) + '=R,'
@@ -134,4 +137,3 @@ class TOC(object):
                         self.latex += "\\newpage\n"
                         self.latex += self.declassified
                         self.is_newpage = False
-        print(self.latex)

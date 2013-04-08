@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import codecs, logging, os
+import codecs, logging, os, util
 from tokenizer import Tokenizer
 from tokenparser import Parser
 from api import Document
@@ -47,7 +47,8 @@ if __name__ == "__main__":
     
     # Open and read files
     tokenizer = Tokenizer()
-    parser = Parser()
+    progress = util.ProgressChecker()
+    parser = Parser(progress)
     if not os.path.exists(os.curdir + '/latex'):
         os.mkdir(os.curdir + '/latex')
     if not os.path.exists(os.curdir + '/latex'):
@@ -66,7 +67,9 @@ if __name__ == "__main__":
                     data = f.read()
                     token_list = tokenizer.analyze(data)
                     parser.begin(outputfile)
-                    parser.dispatch(token_list)    
+                    parser.dispatch(token_list)
+    print("Total number of pages included in main pages: " + str(doc.num_pages))
+    progress.get_statistics()
 #    with codecs.open(last_open, 'a', 'utf-8') as outputfile:
 #        contributors = doc.attribute()
 #        parser.end_matter(contributors, outputfile)

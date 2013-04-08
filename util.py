@@ -31,3 +31,27 @@ def findall(string, substring, start_ind=0, end_ind=None):
         else:
             break
     return indexes
+
+class ProgressChecker(object):
+    '''
+    0: Without text
+    1: Not proofread
+    2: Problematic
+    3: Proofread
+    4: Validated
+    '''
+    def __init__(self):
+        self.status = [0]*5
+    
+    def get_statistics(self):
+        num_pages = sum(self.status)
+        print("Number of pages parsed: " + str(num_pages))
+        print("Pages without text: " + str(self.status[0]) + " (" + str(round((100*self.status[0]/num_pages), 2)) + "%)")
+        print("Pages that have not been proofread: " + str(self.status[1]) + " (" + str(round((100*self.status[1]/num_pages), 2)) + "%)")
+        print("Problematic pages: " + str(self.status[2]) + " (" + str(round((100*self.status[2]/num_pages), 2)) + "%)")
+        print("Proofread pages: " + str(self.status[3]) + " (" + str(round((100*self.status[3]/num_pages), 2)) + "%)")
+        print("Validated pages: " + str(self.status[4]) + " (" + str(round((100*self.status[4]/num_pages), 2)) + "%)")
+    
+    def page(self, level):
+        index = int(level)
+        self.status[index] += 1

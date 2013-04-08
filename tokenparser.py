@@ -19,16 +19,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import logging, re, wikitable
+import logging, re, wikitable, util
 from reparse import Reparser
 from toc import TOC
 
 class Parser(object):
-    def __init__(self):
+    def __init__(self, progress):
         self.logger = logging.getLogger("W2L")
         self.output = None
         self.reparser = Reparser()
         self.indented = False
+        self.progress = progress
     
     def begin(self, outputfile):
         self.output = outputfile
@@ -225,6 +226,7 @@ class Parser(object):
         self.value = self.reparser.sub(self.value[2])
     
     def pagequality(self):
+        self.progress.page(self.value)
         if self.output.tell() != 0:
             self.value = "\n\\newpage\n"
         else:
